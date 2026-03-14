@@ -1,0 +1,13 @@
+{
+  "name": "t4-kpi-adjustment",
+  "version": "1.0.0",
+  "description": "KPIAdjustmentService (T4) - Cập nhật trạng thái KPI",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}

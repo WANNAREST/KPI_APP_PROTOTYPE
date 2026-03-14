@@ -1,0 +1,14 @@
+{
+  "name": "t3-kpi-evaluation",
+  "version": "1.0.0",
+  "description": "KPIEvaluationService (T3) - Tính toán hiệu suất KPI",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.2"
+  }
+}

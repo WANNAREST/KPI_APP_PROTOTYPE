@@ -1,0 +1,13 @@
+{
+  "name": "t2-work-data",
+  "version": "1.0.0",
+  "description": "WorkDataService (T2) - Ghi nhận dữ liệu thực tế",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}

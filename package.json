@@ -1,0 +1,17 @@
+{
+  "name": "kpi-app-prototype",
+  "version": "1.0.0",
+  "description": "KPI Management System - Microservices Prototype",
+  "scripts": {
+    "install:all": "cd services/t1-kpi-setup && npm install && cd ../t2-work-data && npm install && cd ../t3-kpi-evaluation && npm install && cd ../t4-kpi-adjustment && npm install && cd ../../frontend && npm install",
+    "dev:t1": "cd services/t1-kpi-setup && node index.js",
+    "dev:t2": "cd services/t2-work-data && node index.js",
+    "dev:t3": "cd services/t3-kpi-evaluation && node index.js",
+    "dev:t4": "cd services/t4-kpi-adjustment && node index.js",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run dev:t1\" \"npm run dev:t2\" \"npm run dev:t3\" \"npm run dev:t4\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
