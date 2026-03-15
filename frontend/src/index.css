@@ -1,1 +1,147 @@
 @import "tailwindcss";
+
+@theme {
+  --color-surface: #0f1729;
+  --color-surface-2: #151d33;
+  --color-surface-3: #1a2340;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-accent: #7c3aed;
+  --color-accent-2: #6d28d9;
+}
+
+/* Base styles */
+body {
+  background-color: #0b1121;
+  color: #e2e8f0;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Custom select arrow */
+select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* =========================================
+   UI COMPONENTS (Classes for Pages)
+   Thêm các class này để source code JSX gọn hơn
+   và dễ dàng chỉnh sửa giao diện ở 1 nơi
+   ========================================= */
+
+/* --- Layout & Typography --- */
+.page-desc {
+  @apply text-base text-slate-500 mb-6;
+}
+
+/* --- Cards --- */
+.card {
+  @apply rounded-xl bg-[#111827] border border-white/[0.06] overflow-hidden;
+}
+
+.card-header {
+  @apply px-6 py-4 border-b border-white/[0.06] flex justify-between items-center;
+}
+
+.card-title {
+  @apply font-semibold text-sm;
+}
+
+.card-body {
+  @apply p-6;
+}
+
+/* --- Buttons --- */
+.btn-primary {
+  @apply px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-sm font-medium transition cursor-pointer;
+}
+
+.btn-danger-text {
+  @apply text-red-400/60 hover:text-red-400 text-xs cursor-pointer;
+}
+
+/* --- Forms --- */
+.form-label {
+  @apply block text-xs font-medium text-slate-400 mb-1.5;
+}
+
+.form-input {
+  @apply w-full px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500;
+}
+
+.form-select {
+  @apply w-full px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+/* --- Tables --- */
+.table-container {
+  @apply overflow-x-auto;
+}
+
+.table-main {
+  @apply w-full text-sm;
+}
+
+.table-th {
+  @apply py-3 px-6 font-medium text-left text-slate-500 text-xs uppercase tracking-wider;
+}
+
+.table-th-right {
+  @apply py-3 px-6 font-medium text-right text-slate-500 text-xs uppercase tracking-wider;
+}
+
+.table-th-center {
+  @apply py-3 px-6 font-medium text-center text-slate-500 text-xs uppercase tracking-wider;
+}
+
+.table-tr {
+  @apply border-b border-white/[0.03] hover:bg-white/[0.02] transition;
+}
+
+.table-td {
+  @apply py-3 px-6 text-slate-400;
+}
+
+.table-td-right {
+  @apply py-3 px-6 text-right text-slate-400;
+}
+
+.table-td-center {
+  @apply py-3 px-6 text-center text-slate-400;
+}
+
+/* --- Toasts --- */
+.toast-success {
+  @apply fixed top-5 right-5 z-50 bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 text-sm px-4 py-2.5 rounded-lg shadow-xl;
+}
