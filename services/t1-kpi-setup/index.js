@@ -10,9 +10,6 @@ let kpis = [];
 let nextProjectId = 1;
 let nextEmployeeId = 1;
 let nextKpiId = 1;
-
-// ─────────────── PROJECTS ───────────────
-
 // GET — Danh sách dự án
 app.get('/api/projects', (req, res) => {
   res.json(projects);
@@ -36,14 +33,12 @@ app.post('/api/projects', (req, res) => {
   console.log(`[T1] Đã tạo dự án: ${project.name}`);
   res.status(201).json(project);
 });
-
 // GET — Lấy dự án theo ID
 app.get('/api/projects/:id', (req, res) => {
   const project = projects.find(p => p.id === Number(req.params.id));
   if (!project) return res.status(404).json({ error: 'Không tìm thấy dự án' });
   res.json(project);
 });
-
 // DELETE — Xóa dự án
 app.delete('/api/projects/:id', (req, res) => {
   const idx = projects.findIndex(p => p.id === Number(req.params.id));
@@ -51,14 +46,11 @@ app.delete('/api/projects/:id', (req, res) => {
   projects.splice(idx, 1);
   res.json({ message: 'Đã xóa dự án' });
 });
-
 // ─────────────── EMPLOYEES ───────────────
-
 // GET — Danh sách nhân viên
 app.get('/api/employees', (req, res) => {
   res.json(employees);
 });
-
 // POST — Tạo nhân viên mới
 app.post('/api/employees', (req, res) => {
   const { name, position, department } = req.body;
@@ -76,7 +68,6 @@ app.post('/api/employees', (req, res) => {
   console.log(`[T1] Đã tạo nhân viên: ${employee.name}`);
   res.status(201).json(employee);
 });
-
 // DELETE — Xóa nhân viên
 app.delete('/api/employees/:id', (req, res) => {
   const idx = employees.findIndex(e => e.id === Number(req.params.id));
@@ -84,9 +75,7 @@ app.delete('/api/employees/:id', (req, res) => {
   employees.splice(idx, 1);
   res.json({ message: 'Đã xóa nhân viên' });
 });
-
 // ─────────────── KPI DEFINITIONS ───────────────
-
 // GET — Danh sách KPI
 app.get('/api/kpis', (req, res) => {
   // Enrich with project/employee names
@@ -144,9 +133,7 @@ app.put('/api/kpis/:id', (req, res) => {
   }
   res.json(kpi);
 });
-
 // ─────────────── STATS ───────────────
-
 // GET — Thống kê tổng quan cho Dashboard
 app.get('/api/stats', (req, res) => {
   res.json({

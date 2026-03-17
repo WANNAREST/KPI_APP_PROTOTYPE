@@ -22,10 +22,10 @@ export default function Dashboard() {
   }
 
   const cards = [
-    { label: 'Dự án', value: stats.totalProjects, sub: '0% so với tháng trước', iconBg: 'bg-blue-500/10', iconColor: 'text-blue-400', icon: '📁' },
-    { label: 'Nhân viên', value: stats.totalEmployees, sub: '0% so với tháng trước', iconBg: 'bg-violet-500/10', iconColor: 'text-violet-400', icon: '👥' },
-    { label: 'Chỉ số KPI', value: stats.totalKpis, sub: '0% so với tháng trước', iconBg: 'bg-amber-500/10', iconColor: 'text-amber-400', icon: '⚡' },
-    { label: 'Hiệu suất TB', value: `${evalStats.avgPerformance}%`, sub: evalStats.avgPerformance > 0 ? `+${evalStats.avgPerformance}% tăng trưởng` : '0% tăng trưởng', iconBg: 'bg-emerald-500/10', iconColor: 'text-emerald-400', icon: '📈' },
+    { label: 'Dự án', value: stats.totalProjects, sub: '0% so với tháng trước', iconBg: 'bg-blue-500/10', iconColor: 'text-blue-400', icon: '/inspection.png' },
+    { label: 'Nhân viên', value: stats.totalEmployees, sub: '0% so với tháng trước', iconBg: 'bg-violet-500/10', iconColor: 'text-violet-400', icon: '/favicon.svg' },
+    { label: 'Chỉ số KPI', value: stats.totalKpis, sub: '0% so với tháng trước', iconBg: 'bg-amber-500/10', iconColor: 'text-amber-400', icon: '/favicon.svg' },
+    { label: 'Hiệu suất TB', value: `${evalStats.avgPerformance}%`, sub: evalStats.avgPerformance > 0 ? `+${evalStats.avgPerformance}% tăng trưởng` : '0% tăng trưởng', iconBg: 'bg-emerald-500/10', iconColor: 'text-emerald-400', icon: '/favicon.svg' },
   ]
 
   const services = [
@@ -47,8 +47,8 @@ export default function Dashboard() {
                 <p className="text-3xl font-bold text-white mt-2">{c.value}</p>
                 <p className="text-[11px] text-slate-600 mt-1">{c.sub}</p>
               </div>
-              <div className={`w-10 h-10 rounded-lg ${c.iconBg} flex items-center justify-center text-lg ${c.iconColor}`}>
-                {c.icon}
+              <div className={`w-10 h-10 rounded-lg ${c.iconBg} flex items-center justify-center text-lg`}>
+                <img src={c.icon} alt="icon" className="w-5 h-5 opacity-80" />
               </div>
             </div>
           </div>
