@@ -5,106 +5,153 @@ const T1 = 'http://localhost:3001'
 const T2 = 'http://localhost:3002'
 
 export default function WorkData() {
-  const [kpis, setKpis] = useState([])
-  const [workData, setWorkData] = useState([])
-  const [form, setForm] = useState({ kpiId: '', actual: '', note: '' })
+  const [tasks, setTasks] = useState([])
+  const [employees, setEmployees] = useState([])
+  const [workLogs, setWorkLogs] = useState([])
 
   const fetchData = () => {
-    fetch(`${T1}/api/kpis`).then(r => r.json()).then(setKpis).catch(() => {})
-    fetch(`${T2}/api/workdata`).then(r => r.json()).then(setWorkData).catch(() => {})
+    fetch(`${T1}/api/tasks`).then(r => r.json()).then(setTasks).catch(() => {})
+    fetch(`${T1}/api/employees`).then(r => r.json()).then(setEmployees).catch(() => {})
+    fetch(`${T2}/api/worklogs`).then(r => r.json()).then(setWorkLogs).catch(() => {})
   }
   useEffect(fetchData, [])
 
 
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!form.kpiId || !form.actual) { toast.warn('Vui lòng chọn KPI và nhập giá trị'); return }
-    await fetch(`${T2}/api/workdata`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form)
-    })
-    setForm({ kpiId: '', actual: '', note: '' })
-    fetchData(); toast.success('Đã ghi nhận dữ liệu')
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      const res = await fetch(`${T2}/api/workdata/tasks/${taskId}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (res.ok) {
+        toast.success(`Đã chuyển trạng thái sang ${newStatus}`);
+        fetchData();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Lỗi cập nhật trạng thái');
+      }
+    } catch {
+      toast.error('Lỗi kết nối đến server');
+    }
   }
 
   const deleteEntry = async (id) => {
-    await fetch(`${T2}/api/workdata/${id}`, { method: 'DELETE' })
-    fetchData(); toast.success('Đã xóa')
+    toast.warn('Không thể xóa log công việc trong phiên bản này');
   }
 
-  const enriched = workData.map(w => {
-    const kpi = kpis.find(k => k.id === w.kpiId)
-    return { ...w, kpiName: kpi?.name || `KPI #${w.kpiId}`, unit: kpi?.unit || '', target: kpi?.target || 0 }
-  })
+  const enrichedLogs = workLogs.map(w => {
+    const emp = employees.find(e => e.id === w.employeeId);
+    return { ...w, employeeName: emp ? emp.name : 'Unknown' };
+  });
+
+  const getStatusColor = (status) => {
+    if (status === 'Done') return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
+    if (status === 'Inprogress') return 'bg-amber-500/15 text-amber-400 border-amber-500/30';
+    if (status === 'WontDo') return 'bg-slate-500/15 text-slate-400 border-slate-500/30';
+    return 'bg-blue-500/15 text-blue-400 border-blue-500/30';
+  };
 
   return (
     <div>
-      <p className="page-desc">Ghi nhận dữ liệu thực tế làm được cho từng chỉ số KPI</p>
+      <p className="page-desc">Cập nhật tiến độ công việc để hệ thống ghi nhận dữ liệu thực tế</p>
 
-
-
-      {/* Form Card */}
+      {/* Task List (Kanban-like List) */}
       <div className="card mb-6">
-        <div className="card-header">
-          <h2 className="card-title">Ghi nhận dữ liệu mới</h2>
+        <div className="card-header pb-2">
+          <h2 className="card-title">Cập nhật trạng thái Task (Bảng công việc)</h2>
         </div>
-        <form onSubmit={handleSubmit} className="card-body grid grid-cols-1 lg:grid-cols-4 gap-4">
-          <div>
-            <label className="form-label">Chọn KPI <span className="text-red-400">*</span></label>
-            <select value={form.kpiId} onChange={e => setForm({...form, kpiId: e.target.value})} required
-              className="form-input appearance-none">
-              <option value="" className="bg-slate-800">— Chọn KPI —</option>
-              {kpis.map(k => <option key={k.id} value={k.id} className="bg-slate-800">{k.name} (Mục tiêu: {k.target} {k.unit})</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="form-label">Giá trị thực tế <span className="text-red-400">*</span></label>
-            <input type="number" placeholder="Nhập giá trị" value={form.actual} onChange={e => setForm({...form, actual: e.target.value})} required
-              className="form-input" />
-          </div>
-          <div>
-            <label className="form-label">Ghi chú</label>
-            <input placeholder="Tùy chọn" value={form.note} onChange={e => setForm({...form, note: e.target.value})}
-              className="form-input" />
-          </div>
-          <div className="flex items-end">
-            <button type="submit" className="w-full btn-primary">Ghi nhận</button>
-          </div>
-        </form>
-      </div>
-
-      {/* Table Card */}
-      <div className="card">
-        <div className="card-header">
-          <h2 className="card-title">Dữ liệu đã ghi nhận ({enriched.length})</h2>
-        </div>
-        <div className="table-container">
+        <div className="table-container pt-2">
           <table className="table-main">
             <thead>
               <tr>
-                <th className="table-th">ID</th>
-                <th className="table-th">Chỉ số KPI</th>
-                <th className="table-th-right">Mục tiêu</th>
-                <th className="table-th-right">Thực tế</th>
-                <th className="table-th">Ghi chú</th>
-                <th className="table-th">Ngày ghi</th>
-                <th className="table-th-right"></th>
+                <th className="table-th w-1/3">Công việc</th>
+                <th className="table-th">Loại</th>
+                <th className="table-th">Phân công</th>
+                <th className="table-th text-center">Trạng thái hiện tại</th>
+                <th className="table-th-center">Cập nhật thành</th>
               </tr>
             </thead>
             <tbody>
-              {enriched.length === 0 && <tr><td colSpan="7" className="text-center py-12 text-slate-600">Chưa có dữ liệu</td></tr>}
-              {enriched.map(w => (
-                <tr key={w.id} className="table-tr">
-                  <td className="table-td text-slate-500">{w.id}</td>
-                  <td className="table-td font-medium text-white">{w.kpiName}</td>
-                  <td className="table-td-right">{w.target} {w.unit}</td>
-                  <td className="table-td-right font-medium text-indigo-300">{w.actual} {w.unit}</td>
-                  <td className="table-td">{w.note || '—'}</td>
-                  <td className="table-td text-xs">{new Date(w.createdAt).toLocaleDateString('vi-VN')}</td>
-                  <td className="table-td-right">
-                    <button onClick={() => deleteEntry(w.id)} className="btn-danger-text">Xóa</button>
+              {tasks.length === 0 && <tr><td colSpan="5" className="text-center py-12 text-slate-500">Chưa có công việc nào cần xử lý</td></tr>}
+              {tasks.map(t => (
+                <tr key={t.id} className="table-tr">
+                  <td className="table-td">
+                    <p className="font-medium text-white">{t.name}</p>
+                    <p className="text-[10px] text-slate-500 mt-1">Dự án: {t.projectName} • Estimate: {t.estimate}d</p>
                   </td>
+                  <td className="table-td">
+                    <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400">{t.type}</span>
+                  </td>
+                  <td className="table-td text-indigo-300">{t.assigneeName}</td>
+                  <td className="table-td text-center">
+                    <span className={`px-2 py-1 rounded text-xs border ${getStatusColor(t.status)}`}>
+                      {t.status}
+                    </span>
+                  </td>
+                  <td className="table-td-center">
+                    <div className="flex items-center justify-center gap-2">
+                      {t.status === 'Todo' && (
+                        <button onClick={() => handleStatusChange(t.id, 'Inprogress')} className="px-3 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 rounded text-xs transition">
+                          ▶ Bắt đầu làm (Inprogress)
+                        </button>
+                      )}
+                      {t.status === 'Inprogress' && (
+                        <button onClick={() => handleStatusChange(t.id, 'Done')} className="px-3 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 rounded text-xs transition">
+                          ✔ Hoàn thành (Done)
+                        </button>
+                      )}
+                      {t.status !== 'Done' && t.status !== 'WontDo' && (
+                        <button onClick={() => handleStatusChange(t.id, 'WontDo')} className="text-[10px] text-slate-500 hover:text-red-400 transition" title="Hủy bỏ/Không làm nữa">
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* History Card (WorkLogs) */}
+      <div className="card">
+        <div className="card-header pb-2">
+          <h2 className="card-title">Nhật ký hoạt động ({workLogs.length})</h2>
+        </div>
+        <div className="table-container pt-2">
+          <table className="table-main">
+            <thead>
+              <tr>
+                <th className="table-th w-16">ID</th>
+                <th className="table-th">Thời gian</th>
+                <th className="table-th">Nhân sự</th>
+                <th className="table-th">Task</th>
+                <th className="table-th">Thay đổi trạng thái</th>
+                <th className="table-th w-1/4">Ghi chú hệ thống</th>
+              </tr>
+            </thead>
+            <tbody>
+              {enrichedLogs.length === 0 && <tr><td colSpan="6" className="text-center py-12 text-slate-600">Chưa có hoạt động nào</td></tr>}
+              {/* Reverse to show latest first */}
+              {enrichedLogs.slice().reverse().map(w => (
+                <tr key={w.id} className="table-tr text-sm">
+                  <td className="table-td text-slate-500">#{w.id}</td>
+                  <td className="table-td text-xs text-slate-400">
+                    {new Date(w.timestamp).toLocaleTimeString('vi-VN')} {new Date(w.timestamp).toLocaleDateString('vi-VN')}
+                  </td>
+                  <td className="table-td text-indigo-300 font-medium">{w.employeeName}</td>
+                  <td className="table-td text-white">{w.taskName}</td>
+                  <td className="table-td">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded text-[10px] border ${getStatusColor(w.oldStatus)}`}>{w.oldStatus}</span>
+                      <span className="text-slate-500">→</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] border ${getStatusColor(w.newStatus)}`}>{w.newStatus}</span>
+                    </div>
+                  </td>
+                  <td className="table-td italic text-slate-500">{w.note}</td>
                 </tr>
               ))}
             </tbody>

@@ -23,28 +23,22 @@ app.post('/api/adjust', (req, res) => {
   }
 
   const newAdjustments = results.map(r => {
-    const existingIdx = adjustments.findIndex(a => a.kpiId === r.kpiId);
+    // Unique identifier for this assessment: type + id
+    const existingIdx = adjustments.findIndex(a => a.type === r.type && a.targetId === r.id);
     const adjustment = {
       id: existingIdx !== -1 ? adjustments[existingIdx].id : nextId++,
-      kpiId: r.kpiId,
+      type: r.type, // 'Project' or 'Employee'
+      targetId: r.id, // Project ID or Employee ID
       name: r.name,
-      target: r.target,
-      actual: r.actual,
-      unit: r.unit,
-      performance: r.performance,
-      status: r.status,
-      projectName: r.projectName || '—',
-      employeeName: r.employeeName || '—',
-      employeeName: r.employeeName || '—',
+      velocity: r.velocity,
+      completionRate: r.completionRate,
+      quality: r.quality,
+      cycleTime: r.cycleTime,
+      overallScore: r.overallScore,
+      
       adjustedAt: new Date().toISOString(),
       note: existingIdx !== -1 ? adjustments[existingIdx].note : '',
-      nextTarget: existingIdx !== -1 ? adjustments[existingIdx].nextTarget : Math.round(r.target * 1.1), // Suggest 10% increase by default
-      history: existingIdx !== -1 ? adjustments[existingIdx].history : [
-        Math.max(0, r.performance - 30),
-        Math.max(0, r.performance - 15),
-        Math.max(0, r.performance + 10),
-        r.performance
-      ],
+      nextTarget: existingIdx !== -1 ? adjustments[existingIdx].nextTarget : Math.round(r.overallScore * 1.1),
       isClosed: existingIdx !== -1 ? adjustments[existingIdx].isClosed : false
     };
 
@@ -56,32 +50,16 @@ app.post('/api/adjust', (req, res) => {
     return adjustment;
   });
 
-  console.log(`[T4] Đã cập nhật ${newAdjustments.length} KPI`);
+  console.log(`[T4] Đã lưu kết quả cho ${newAdjustments.length} đối tượng`);
   res.json({ adjustments: newAdjustments });
 });
 
-// POST — Cập nhật trạng thái thủ công cho 1 KPI
-app.post('/api/adjust/:kpiId', (req, res) => {
-  const kpiId = Number(req.params.kpiId);
-  const { status } = req.body;
-
-  const idx = adjustments.findIndex(a => a.kpiId === kpiId);
-  if (idx === -1) {
-    return res.status(404).json({ error: 'Chưa có kết quả đánh giá cho KPI này' });
-  }
-
-  adjustments[idx].status = status;
-  adjustments[idx].adjustedAt = new Date().toISOString();
-  console.log(`[T4] Cập nhật KPI #${kpiId} → ${status}`);
-  res.json(adjustments[idx]);
-});
-
 // POST — Cập nhật chi tiết (Notes, NextTarget, IsClosed)
-app.post('/api/adjust/:kpiId/details', (req, res) => {
-  const kpiId = Number(req.params.kpiId);
+app.post('/api/adjust/summary/:id/details', (req, res) => {
+  const id = Number(req.params.id);
   const { note, nextTarget, isClosed } = req.body;
 
-  const idx = adjustments.findIndex(a => a.kpiId === kpiId);
+  const idx = adjustments.findIndex(a => a.id === id);
   if (idx === -1) return res.status(404).json({ error: 'Không tìm thấy' });
 
   if (note !== undefined) adjustments[idx].note = note;

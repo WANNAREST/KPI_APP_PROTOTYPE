@@ -11,56 +11,68 @@ app.use(express.json());
 // WorkDataService (T2) — Ghi nhận dữ liệu thực tế
 // ============================================
 
-let workData = [];
-let nextId = 1;
+let workLogs = [];
+let nextLogId = 1;
 
-// POST — Ghi nhận dữ liệu thực tế
-app.post('/api/workdata', (req, res) => {
-  const { kpiId, actual, note } = req.body;
+const T1_URL = 'http://localhost:3001';
 
-  if (!kpiId || actual === undefined) {
-    return res.status(400).json({ error: 'Vui lòng cung cấp: kpiId, actual' });
-  }
-
-  // Nếu đã có dữ liệu cho KPI này → cập nhật
-  const existing = workData.findIndex(w => w.kpiId === Number(kpiId));
-  if (existing !== -1) {
-    workData[existing].actual = Number(actual);
-    workData[existing].note = note || workData[existing].note;
-    workData[existing].updatedAt = new Date().toISOString();
-    console.log(`[T2] Cập nhật KPI #${kpiId}: actual = ${actual}`);
-    return res.json(workData[existing]);
-  }
-
-  const entry = {
-    id: nextId++,
-    kpiId: Number(kpiId),
-    actual: Number(actual),
-    note: note || '',
-    createdAt: new Date().toISOString()
-  };
-  workData.push(entry);
-  console.log(`[T2] Ghi nhận KPI #${kpiId}: actual = ${actual}`);
-  res.status(201).json(entry);
+// Lấy danh sách work logs
+app.get('/api/worklogs', (req, res) => {
+  res.json(workLogs);
 });
 
-// GET — Tất cả dữ liệu thực tế
-app.get('/api/workdata', (req, res) => {
-  res.json(workData);
+// Cập nhật trạng thái Task (tương đương với việc "làm việc")
+app.post('/api/workdata/tasks/:taskId/status', async (req, res) => {
+  const taskId = Number(req.params.taskId);
+  const { status, note, employeeId } = req.body;
+
+  if (!status) {
+    return res.status(400).json({ error: 'Cần cung cấp status mới' });
+  }
+
+  try {
+    // 1. Fetch task current info from T1
+    const t1Res = await fetch(`${T1_URL}/api/tasks`);
+    const tasks = await t1Res.json();
+    const task = tasks.find(t => t.id === taskId);
+    
+    if (!task) return res.status(404).json({ error: 'Không tìm thấy Task trên T1' });
+
+    // 2. Cập nhật status sang T1
+    const updRes = await fetch(`${T1_URL}/api/tasks/${taskId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+
+    if (!updRes.ok) throw new Error('Cập nhật T1 thất bại');
+
+    // 3. Ghi log công việc tại T2
+    const logEntry = {
+      id: nextLogId++,
+      taskId,
+      taskName: task.name,
+      employeeId: employeeId || task.assigneeId,
+      oldStatus: task.status,
+      newStatus: status,
+      note: note || `Đổi trạng thái thành ${status}`,
+      timestamp: new Date().toISOString()
+    };
+    workLogs.push(logEntry);
+    
+    console.log(`[T2] Đã ghi nhận chuyển Task #${taskId} sang ${status}`);
+    res.status(201).json(logEntry);
+
+  } catch (err) {
+    console.error('[T2] Lỗi gọi T1:', err.message);
+    res.status(500).json({ error: 'Không thể cập nhật Task (Lỗi kết nối T1)' });
+  }
 });
 
-// GET — Dữ liệu theo KPI ID
-app.get('/api/workdata/:kpiId', (req, res) => {
-  const data = workData.filter(w => w.kpiId === Number(req.params.kpiId));
+// GET — Dữ liệu log theo Task ID
+app.get('/api/worklogs/task/:taskId', (req, res) => {
+  const data = workLogs.filter(w => w.taskId === Number(req.params.taskId));
   res.json(data);
-});
-
-// DELETE — Xóa dữ liệu
-app.delete('/api/workdata/:id', (req, res) => {
-  const idx = workData.findIndex(w => w.id === Number(req.params.id));
-  if (idx === -1) return res.status(404).json({ error: 'Không tìm thấy' });
-  workData.splice(idx, 1);
-  res.json({ message: 'Đã xóa' });
 });
 
 app.listen(PORT, () => {

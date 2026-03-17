@@ -7,9 +7,16 @@ app.use(express.json());
 let projects = [];
 let employees = [];
 let kpis = [];
+let tasks = [];
+let assets = [];
+
 let nextProjectId = 1;
 let nextEmployeeId = 1;
 let nextKpiId = 1;
+let nextTaskId = 1;
+let nextAssetId = 1;
+
+// ─────────────── PROJECTS ───────────────
 // GET — Danh sách dự án
 app.get('/api/projects', (req, res) => {
   res.json(projects);
@@ -53,7 +60,7 @@ app.get('/api/employees', (req, res) => {
 });
 // POST — Tạo nhân viên mới
 app.post('/api/employees', (req, res) => {
-  const { name, position, department } = req.body;
+  const { name, position, department, costPerHour, skills } = req.body;
   if (!name) {
     return res.status(400).json({ error: 'Tên nhân viên là bắt buộc' });
   }
@@ -62,6 +69,8 @@ app.post('/api/employees', (req, res) => {
     name,
     position: position || '',
     department: department || '',
+    costPerHour: Number(costPerHour) || 10,
+    skills: skills || {}, // e.g., { "React": 3, "NodeJS": 4 }
     createdAt: new Date().toISOString()
   };
   employees.push(employee);
@@ -133,13 +142,125 @@ app.put('/api/kpis/:id', (req, res) => {
   }
   res.json(kpi);
 });
+
+// ─────────────── TASKS ───────────────
+// GET — Danh sách Task
+app.get('/api/tasks', (req, res) => {
+  const enriched = tasks.map(t => ({
+    ...t,
+    projectName: projects.find(p => p.id === t.projectId)?.name || '—',
+    assigneeName: employees.find(e => e.id === t.assigneeId)?.name || '—'
+  }));
+  res.json(enriched);
+});
+
+// POST — Tạo Task
+app.post('/api/tasks', (req, res) => {
+  const { projectId, name, parentId, status, type, estimate, tags, skillsRequired, taskWeight, assigneeId } = req.body;
+  if (!name || !projectId || !type || !estimate) {
+    return res.status(400).json({ error: 'Dữ liệu bắt buộc: projectId, name, type, estimate' });
+  }
+  const task = {
+    id: nextTaskId++,
+    projectId: Number(projectId),
+    assigneeId: assigneeId ? Number(assigneeId) : null,
+    name,
+    parentId: parentId || [], // Array of prerequisite task IDs
+    status: status || 'Todo', // Todo, Inprogress, Done, WontDo
+    type, // Task, Bug, Epic, Story
+    estimate: Number(estimate),
+    tags: tags || [],
+    skillsRequired: skillsRequired || {}, // e.g., { "React": 3 }
+    taskWeight: Number(taskWeight) || Number(estimate), // Fallback to estimate if not provided
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  tasks.push(task);
+  console.log(`[T1] Đã tạo Task: ${task.name}`);
+  res.status(201).json(task);
+});
+
+// DELETE — Xóa Task
+app.delete('/api/tasks/:id', (req, res) => {
+  const idx = tasks.findIndex(t => t.id === Number(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'Không tìm thấy Task' });
+  tasks.splice(idx, 1);
+  res.json({ message: 'Đã xóa Task' });
+});
+
+// PUT — Cập nhật Task
+app.put('/api/tasks/:id', (req, res) => {
+  const task = tasks.find(t => t.id === Number(req.params.id));
+  if (!task) return res.status(404).json({ error: 'Không tìm thấy Task' });
+  
+  const updates = req.body;
+  Object.assign(task, updates);
+  task.updatedAt = new Date().toISOString();
+  
+  console.log(`[T1] Đã cập nhật Task #${task.id}`);
+  res.json(task);
+});
+
+// ─────────────── ASSETS ───────────────
+// GET — Danh sách Asset
+app.get('/api/assets', (req, res) => {
+  const enriched = assets.map(a => ({
+    ...a,
+    projectName: projects.find(p => p.id === a.projectId)?.name || '—'
+  }));
+  res.json(enriched);
+});
+
+// POST — Tạo Asset
+app.post('/api/assets', (req, res) => {
+  const { type, status, projectId, code, name } = req.body;
+  if (!type) {
+    return res.status(400).json({ error: 'Loại tài sản (type) là bắt buộc' });
+  }
+  const asset = {
+    id: nextAssetId++,
+    type, // Laptop, Server, Room...
+    status: status || 'available', // available | in_use
+    projectId: projectId ? Number(projectId) : null,
+    code: code || '',
+    name: name || '',
+    usageLog: [],
+    createdAt: new Date().toISOString()
+  };
+  assets.push(asset);
+  console.log(`[T1] Đã tạo Asset: ${asset.name || asset.code}`);
+  res.status(201).json(asset);
+});
+
+// DELETE — Xóa Asset
+app.delete('/api/assets/:id', (req, res) => {
+  const idx = assets.findIndex(a => a.id === Number(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'Không tìm thấy Asset' });
+  assets.splice(idx, 1);
+  res.json({ message: 'Đã xóa Asset' });
+});
+
+// PUT — Cập nhật Asset
+app.put('/api/assets/:id', (req, res) => {
+  const asset = assets.find(a => a.id === Number(req.params.id));
+  if (!asset) return res.status(404).json({ error: 'Không tìm thấy Asset' });
+  
+  const updates = req.body;
+  Object.assign(asset, updates);
+  
+  console.log(`[T1] Đã cập nhật Asset #${asset.id}`);
+  res.json(asset);
+});
+
 // ─────────────── STATS ───────────────
 // GET — Thống kê tổng quan cho Dashboard
 app.get('/api/stats', (req, res) => {
   res.json({
     totalProjects: projects.length,
     totalEmployees: employees.length,
-    totalKpis: kpis.length
+    totalKpis: kpis.length,
+    totalTasks: tasks.length,
+    totalAssets: assets.length
   });
 });
 

@@ -1,5 +1,4 @@
 import { NavLink } from 'react-router-dom'
-
 const navItems = [
   { to: '/', icon: '⊞', label: 'Tổng Quan' },
   { to: '/setup', icon: '◈', label: 'KPI Setup Service' },
@@ -7,7 +6,6 @@ const navItems = [
   { to: '/evaluation', icon: '◫', label: 'Evaluation Service' },
   { to: '/adjustment', icon: '◪', label: 'Adjustment Service' },
 ]
-
 export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-64 bg-[#0d1420] border-r border-white/[0.06] flex flex-col z-50">

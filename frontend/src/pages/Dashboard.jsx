@@ -4,8 +4,8 @@ const T1 = 'http://localhost:3001'
 const T3 = 'http://localhost:3003'
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({ totalProjects: 0, totalEmployees: 0, totalKpis: 0 })
-  const [evalStats, setEvalStats] = useState({ totalKpis: 0, evaluated: 0, passed: 0, failed: 0, avgPerformance: 0 })
+  const [stats, setStats] = useState({ totalProjects: 0, totalEmployees: 0, totalKpis: 0, totalTasks: 0, totalAssets: 0 })
+  const [evalStats, setEvalStats] = useState({ totalEmployees: 0, totalTasks: 0, doneTasks: 0, avgCompletion: 0, systemHealth: 'N/A' })
   const [refreshing, setRefreshing] = useState(false)
 
   const fetchStats = () => {
@@ -22,10 +22,10 @@ export default function Dashboard() {
   }
 
   const cards = [
-    { label: 'Dự án', value: stats.totalProjects, sub: '0% so với tháng trước', iconBg: 'bg-blue-500/10', iconColor: 'text-blue-400', icon: '/inspection.png' },
-    { label: 'Nhân viên', value: stats.totalEmployees, sub: '0% so với tháng trước', iconBg: 'bg-violet-500/10', iconColor: 'text-violet-400', icon: '/favicon.svg' },
-    { label: 'Chỉ số KPI', value: stats.totalKpis, sub: '0% so với tháng trước', iconBg: 'bg-amber-500/10', iconColor: 'text-amber-400', icon: '/favicon.svg' },
-    { label: 'Hiệu suất TB', value: `${evalStats.avgPerformance}%`, sub: evalStats.avgPerformance > 0 ? `+${evalStats.avgPerformance}% tăng trưởng` : '0% tăng trưởng', iconBg: 'bg-emerald-500/10', iconColor: 'text-emerald-400', icon: '/favicon.svg' },
+    { label: 'Dự án đang chạy', value: stats.totalProjects, sub: 'Được quản lý trên hệ thống', iconBg: 'bg-blue-500/10', iconColor: 'text-blue-400', icon: '/favicon.svg' },
+    { label: 'Nhân sự', value: stats.totalEmployees, sub: 'Tham gia dự án', iconBg: 'bg-violet-500/10', iconColor: 'text-violet-400', icon: '/favicon.svg' },
+    { label: 'Công việc (Tasks)', value: stats.totalTasks, sub: `${evalStats.doneTasks} task đã Done`, iconBg: 'bg-amber-500/10', iconColor: 'text-amber-400', icon: '/favicon.svg' },
+    { label: 'Tiến độ chung', value: `${evalStats.avgCompletion}%`, sub: `Tình trạng: ${evalStats.systemHealth}`, iconBg: 'bg-emerald-500/10', iconColor: 'text-emerald-400', icon: '/favicon.svg' },
   ]
 
   const services = [
@@ -90,21 +90,21 @@ export default function Dashboard() {
       </div>
 
       {/* Evaluation Overview */}
-      {evalStats.totalKpis > 0 && (
+      {(evalStats.totalTasks > 0 || stats.totalAssets > 0) && (
         <div>
-          <h2 className="text-base font-semibold text-white mb-2">Tổng hợp đánh giá</h2>
-          <div className="grid grid-cols-3 gap-4">
+          <h2 className="text-base font-semibold text-white mb-2">Tình trạng Quản lý</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="card p-4 text-center">
-              <p className="text-2xl font-bold text-emerald-400">{evalStats.passed}</p>
-              <p className="text-xs text-slate-500 mt-1">KPI Đạt</p>
+              <p className="text-2xl font-bold text-emerald-400">{evalStats.doneTasks}</p>
+              <p className="text-xs text-slate-500 mt-1">Công việc Hoàn thành</p>
             </div>
             <div className="card p-4 text-center">
-              <p className="text-2xl font-bold text-red-400">{evalStats.failed}</p>
-              <p className="text-xs text-slate-500 mt-1">Không đạt</p>
+              <p className="text-2xl font-bold text-amber-400">{evalStats.totalTasks > 0 ? evalStats.totalTasks - evalStats.doneTasks : 0}</p>
+              <p className="text-xs text-slate-500 mt-1">Đang xử lý / Tồn đọng</p>
             </div>
             <div className="card p-4 text-center">
-              <p className="text-2xl font-bold text-blue-400">{evalStats.evaluated}</p>
-              <p className="text-xs text-slate-500 mt-1">Đã đánh giá</p>
+              <p className="text-2xl font-bold text-indigo-400">{stats.totalAssets}</p>
+              <p className="text-xs text-slate-500 mt-1">Tài sản (Assets) cấp phát</p>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 
 const T3 = 'http://localhost:3003'
@@ -9,16 +9,31 @@ export default function Evaluation() {
   const [loading, setLoading] = useState(false)
   const [evaluated, setEvaluated] = useState(false)
 
+  const fetchPreviousResults = async () => {
+    try {
+      const res = await fetch(`${T4}/api/adjustments`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.length > 0) {
+          setResults(data)
+          setEvaluated(true)
+        }
+      }
+    } catch {
+      // Ignore if fetch fails on initial load
+    }
+  }
 
-
-
+  useEffect(() => {
+    fetchPreviousResults()
+  }, [])
   const handleEvaluate = async () => {
     setLoading(true)
     try {
       const evalRes = await fetch(`${T3}/api/evaluate`)
       const evalData = await evalRes.json()
       if (!evalData.results?.length) {
-        toast.warn('Chưa có dữ liệu KPI để đánh giá'); setLoading(false); return
+        toast.warn('Chưa đủ dữ liệu công việc (Task) để tính toán KPI'); setLoading(false); return
       }
       const adjRes = await fetch(`${T4}/api/adjust`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -27,16 +42,16 @@ export default function Evaluation() {
       const adjData = await adjRes.json()
       setResults(adjData.adjustments)
       setEvaluated(true)
-      toast.success('Đánh giá hoàn tất')
+      toast.success('Tính toán điểm hiệu suất hoàn tất')
     } catch {
       toast.error('Lỗi kết nối. Kiểm tra T1, T2, T3, T4 đang chạy.')
     }
     setLoading(false)
   }
 
-  const passed = results.filter(r => r.status === 'Đạt').length
-  const failed = results.filter(r => r.status !== 'Đạt').length
-  const avg = results.length > 0 ? Math.round(results.reduce((s, r) => s + r.performance, 0) / results.length) : 0
+  const projectResults = results.filter(r => r.type === 'Project')
+  const employeeResults = results.filter(r => r.type === 'Employee')
+  const avg = results.length > 0 ? Math.round(results.reduce((s, r) => s + r.overallScore, 0) / results.length) : 0
 
   return (
     <div>
@@ -60,16 +75,16 @@ export default function Evaluation() {
       {evaluated && (
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="card p-4 text-center">
-            <p className="text-2xl font-bold text-emerald-400">{passed}</p>
-            <p className="text-xs text-slate-500 mt-1">Đạt</p>
+            <p className="text-2xl font-bold text-indigo-400">{projectResults.length}</p>
+            <p className="text-xs text-slate-500 mt-1">Dự án được đánh giá</p>
           </div>
           <div className="card p-4 text-center">
-            <p className="text-2xl font-bold text-red-400">{failed}</p>
-            <p className="text-xs text-slate-500 mt-1">Không đạt</p>
+            <p className="text-2xl font-bold text-indigo-400">{employeeResults.length}</p>
+            <p className="text-xs text-slate-500 mt-1">Nhân sự được đánh giá</p>
           </div>
           <div className="card p-4 text-center">
-            <p className="text-2xl font-bold text-blue-400">{avg}%</p>
-            <p className="text-xs text-slate-500 mt-1">Hiệu suất TB</p>
+            <p className="text-2xl font-bold text-emerald-400">{avg}%</p>
+            <p className="text-xs text-slate-500 mt-1">Điểm hiệu suất TB</p>
           </div>
         </div>
       )}
@@ -83,47 +98,47 @@ export default function Evaluation() {
           <table className="table-main">
             <thead>
               <tr>
-                <th className="table-th">KPI</th>
-                <th className="table-th">Dự án</th>
-                <th className="table-th">Nhân viên</th>
-                <th className="table-th-right">Mục tiêu</th>
-                <th className="table-th-right">Thực tế</th>
-                <th className="table-th-right">Hiệu suất</th>
-                <th className="table-th-center">Trạng thái</th>
+                <th className="table-th">Đối tượng</th>
+                <th className="table-th text-center">Velocity (ĐV C.Việc)</th>
+                <th className="table-th text-center">Hoàn thành (%)</th>
+                <th className="table-th text-center">Chất lượng (Quality)</th>
+                <th className="table-th text-center">Cycle/On-time</th>
+                <th className="table-th-center">Điểm Hiệu Suất Tổng Hợp (Overall)</th>
               </tr>
             </thead>
             <tbody>
               {results.length === 0 && (
-                <tr><td colSpan="7" className="text-center py-16 text-slate-600">
-                  Nhấn "Tính toán kết quả" để bắt đầu đánh giá
+                <tr><td colSpan="6" className="text-center py-16 text-slate-600">
+                  Nhấn "Tính toán kết quả" để phân tích dữ liệu hiệu suất
                 </td></tr>
               )}
               {results.map(r => (
-                <tr key={r.kpiId} className="table-tr">
-                  <td className="table-td font-medium text-white">{r.name}</td>
-                  <td className="table-td">{r.projectName}</td>
-                  <td className="table-td">{r.employeeName}</td>
-                  <td className="table-td-right text-slate-300">{r.target} {r.unit}</td>
-                  <td className="table-td-right text-slate-300">{r.actual} {r.unit}</td>
-                  <td className="table-td-right">
-                    <div className="flex items-center gap-2 justify-end">
-                      <div className="w-16 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                        <div className={`h-full rounded-full ${r.performance >= 100 ? 'bg-emerald-400' : r.performance >= 70 ? 'bg-amber-400' : 'bg-red-400'}`}
-                          style={{ width: `${Math.min(r.performance, 100)}%` }}></div>
-                      </div>
-                      <span className={`text-xs font-medium ${r.performance >= 100 ? 'text-emerald-400' : r.performance >= 70 ? 'text-amber-400' : 'text-red-400'}`}>
-                        {r.performance}%
-                      </span>
-                    </div>
-                  </td>
-                  <td className="table-td-center">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-medium ${
-                      r.status === 'Đạt'
-                        ? 'bg-emerald-500/10 text-emerald-400'
-                        : 'bg-red-500/10 text-red-400'
-                    }`}>
-                      {r.status}
+                <tr key={`${r.type}-${r.targetId}`} className="table-tr">
+                  <td className="table-td">
+                    <p className="font-medium text-white">{r.name}</p>
+                    <span className={`px-2 py-0.5 mt-1 inline-block rounded text-[10px] ${r.type === 'Project' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                      {r.type === 'Project' ? 'Dự án' : 'Nhân sự'}
                     </span>
+                  </td>
+                  <td className="table-td text-center font-medium text-amber-300">{r.velocity}</td>
+                  <td className="table-td text-center text-slate-300">{r.completionRate}%</td>
+                  <td className="table-td text-center text-slate-300">
+                    <span className={r.quality >= 90 ? 'text-emerald-400' : r.quality >= 70 ? 'text-amber-400' : 'text-red-400'}>
+                      {r.quality}%
+                    </span>
+                  </td>
+                  <td className="table-td text-center text-slate-300">{r.cycleTime.toFixed(1)}</td>
+                  
+                  <td className="table-td-center">
+                    <div className="flex flex-col items-center justify-center gap-1">
+                      <span className={`text-base font-bold ${r.overallScore >= 80 ? 'text-emerald-400' : r.overallScore >= 60 ? 'text-amber-400' : 'text-red-400'}`}>
+                        {r.overallScore} điểm
+                      </span>
+                      <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                        <div className={`h-full rounded-full ${r.overallScore >= 80 ? 'bg-emerald-400' : r.overallScore >= 60 ? 'bg-amber-400' : 'bg-red-400'}`}
+                          style={{ width: `${Math.min(r.overallScore, 100)}%` }}></div>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -1,220 +1,56 @@
-# 🎯 Hệ Thống Quản Lý KPI (Microservices Architecture)
+# 🎯 KPI Management System (Microservices Prototype)
 
 ## 📖 Giới thiệu (Overview)
 
-Dự án này là một **Hệ Thống Quản Lý KPI** được xây dựng theo kiến trúc Microservices. Mục tiêu của hệ thống là tự động hóa và quản lý toàn bộ **Vòng lặp KPI (KPI Cycle)** từ khâu thiếp lập mục tiêu, ghi nhận thực tế, đánh giá hiệu suất cho đến khi đưa ra điều chỉnh. 
-
-Hệ thống giúp các nhà quản lý và nhân viên dễ dàng theo dõi tiến độ công việc, đánh giá mức độ hoàn thành chỉ tiêu một cách khách quan dựa trên dữ liệu thực tế.
+Dự án này là một **Hệ Thống Quản Lý KPI nâng cao** được xây dựng theo kiến trúc Microservices và cơ sở dữ liệu In-Memory. 
+Hệ thống giúp các nhà quản lý theo dõi tiến độ công việc (Tasks), tài sản (Assets) và đánh giá năng suất (Performance/KPIs) của Nhân sự cũng như Dự án một cách tự động thông qua các mô hình công thức tính toán: Velocity, Quality, và Cycle Time.
 
 ---
 
 ## 🏗️ Kiến trúc (Architecture)
 
-Hệ thống bao gồm một Dashboard (Frontend) kết nối trực tiếp đến **4 Microservices** (Backend) độc lập. Mỗi service chịu trách nhiệm cho một giai đoạn riêng biệt trong vòng lặp KPI và chạy trên một port khác nhau:
+Hệ thống bao gồm một Dashboard (Frontend React) kết nối trực tiếp đến **4 Microservices** (Backend Node.js/Express) độc lập:
 
-1. **T1 - KPI Setup (Port 3001):** Quản lý định nghĩa KPI, thông tin Nhân viên và Dự án.
-2. **T2 - Work Data (Port 3002):** Ghi nhận dữ liệu thực tế (Actual data) theo từng KPI.
-3. **T3 - KPI Evaluation (Port 3003):** Lấy dữ liệu từ T1 và T2 để tính toán tỷ lệ hoàn thành (Performance) và đánh giá trạng thái (Đạt / Không đạt).
-4. **T4 - KPI Adjustment (Port 3004):** Nhận kết quả đánh giá từ T3 để phê duyệt trạng thái, ghi chú và đề xuất mục tiêu (Target) cho chu kỳ tiếp theo.
-
----
-
-## 🛠️ Danh sách API chi tiết
-
-### 📌 1. Service T1: KPI Setup (`http://localhost:3001`)
-
-Quản lý danh mục cốt lõi: Dự án, Nhân viên, và KPI Definition.
-
-| Method | Endpoint | Mô tả |
-| :--- | :--- | :--- |
-| **GET** | `/api/projects` | Lấy danh sách dự án |
-| **POST** | `/api/projects` | Tạo dự án mới |
-| **DELETE**| `/api/projects/:id` | Xóa dự án |
-| **GET** | `/api/employees` | Lấy danh sách nhân viên |
-| **POST** | `/api/employees` | Tạo nhân viên mới |
-| **DELETE**| `/api/employees/:id` | Xóa nhân viên |
-| **GET** | `/api/kpis` | Lấy danh sách định nghĩa KPI |
-| **POST** | `/api/kpis` | Tạo KPI mới |
-| **PUT** | `/api/kpis/:id` | Cập nhật mục tiêu KPI (Target) |
-| **DELETE**| `/api/kpis/:id` | Xóa KPI |
-| **GET** | `/api/stats` | Thống kê số lượng tổng quan |
-
-<details>
-<summary><b>Mẫu Request / Response T1</b></summary>
-
-**POST `/api/kpis` - Request Body Mẫu:**
-```json
-{
-  "name": "Doanh thu bán hàng",
-  "target": 500,
-  "unit": "Triệu VND",
-  "projectId": 1,
-  "employeeId": 2
-}
-```
-
-**Response Mẫu:**
-```json
-{
-  "id": 1,
-  "name": "Doanh thu bán hàng",
-  "target": 500,
-  "unit": "Triệu VND",
-  "projectId": 1,
-  "employeeId": 2,
-  "createdAt": "2023-10-25T10:00:00.000Z"
-}
-```
-</details>
-
----
-
-### 📌 2. Service T2: Work Data (`http://localhost:3002`)
-
-Ghi nhận số liệu thực tế cho các KPI đang thực hiện.
-
-| Method | Endpoint | Mô tả |
-| :--- | :--- | :--- |
-| **GET** | `/api/workdata` | Lấy tất cả dữ liệu thực tế |
-| **POST** | `/api/workdata` | Ghi nhận hoặc cập nhật số liệu thực tế cho 1 KPI |
-| **GET** | `/api/workdata/:kpiId`| Lấy dữ liệu thực tế theo ID của KPI |
-| **DELETE**| `/api/workdata/:id` | Xóa dữ liệu |
-
-<details>
-<summary><b>Mẫu Request / Response T2</b></summary>
-
-**POST `/api/workdata` - Request Body Mẫu:**
-```json
-{
-  "kpiId": 1,
-  "actual": 450,
-  "note": "Bán được lô hàng lớn cho công ty XYZ"
-}
-```
-
-**Response Mẫu:**
-```json
-{
-  "id": 1,
-  "kpiId": 1,
-  "actual": 450,
-  "note": "Bán được lô hàng lớn cho công ty XYZ",
-  "createdAt": "2023-10-25T14:30:00.000Z"
-}
-```
-</details>
-
----
-
-### 📌 3. Service T3: KPI Evaluation (`http://localhost:3003`)
-
-Tổng hợp và tính toán hiệu suất tự động.
-
-| Method | Endpoint | Mô tả |
-| :--- | :--- | :--- |
-| **GET** | `/api/evaluate` | Tính toán hiệu suất (Performance %) cho tất cả KPI |
-| **GET** | `/api/evaluate/stats` | Thống kê số lượng KPI Đạt / Không đạt |
-
-<details>
-<summary><b>Mẫu Request / Response T3</b></summary>
-
-**GET `/api/evaluate` - Response Mẫu:**
-```json
-{
-  "results": [
-    {
-      "kpiId": 1,
-      "name": "Doanh thu bán hàng",
-      "target": 500,
-      "unit": "Triệu VND",
-      "actual": 450,
-      "performance": 90,
-      "status": "Không đạt",
-      "projectName": "Dự án A",
-      "employeeName": "Nguyễn Văn B"
-    }
-  ]
-}
-```
-</details>
-
----
-
-### 📌 4. Service T4: KPI Adjustment (`http://localhost:3004`)
-
-Điều chỉnh, phê duyệt và kết luận chu kỳ.
-
-| Method | Endpoint | Mô tả |
-| :--- | :--- | :--- |
-| **GET** | `/api/adjustments` | Lấy danh sách kết quả đã điều chỉnh |
-| **POST** | `/api/adjust` | Cập nhật mảng kết quả từ T3 vào T4 |
-| **POST** | `/api/adjust/:kpiId` | Phê duyệt trạng thái thủ công cho KPI |
-| **POST** | `/api/adjust/:kpiId/details` | Cập nhật Ghi chú, Target mới, hoặc Đóng KPI |
-
-<details>
-<summary><b>Mẫu Request / Response T4</b></summary>
-
-**POST `/api/adjust/1/details` - Request Body Mẫu:**
-```json
-{
-  "note": "Cần cố gắng hơn vào tháng sau",
-  "nextTarget": 550,
-  "isClosed": false
-}
-```
-
-**Response Mẫu:**
-```json
-{
-  "id": 1,
-  "kpiId": 1,
-  "name": "Doanh thu",
-  "performance": 90,
-  "status": "Không đạt",
-  "note": "Cần cố gắng hơn vào tháng sau",
-  "nextTarget": 550,
-  "history": [60, 75, 100, 90],
-  "isClosed": false
-}
-```
-</details>
+1. **T1 - KPI Setup (Port 3001):** Quản lý Master Data: Projects, Employees (skills & costs), Tasks (Estimate, Weight, Status, Type), và Assets.
+2. **T2 - Work Data (Port 3002):** Worker node dùng để cập nhật trạng thái làm việc thực tế (Thay đổi trạng thái Task: Todo -> Inprogress -> Done) và lưu trữ Work Logs.
+3. **T3 - KPI Evaluation (Port 3003):** Thực hiện tính toán hiệu suất tự động. Lấy dữ liệu công việc (Tasks) từ T1 để tổng hợp ra các chỉ số: Velocity (Số điểm công việc đạt được), Quality (Tỷ lệ ít bug), Completion Rate, và Overall Score.
+4. **T4 - KPI Adjustment (Port 3004):** Hệ thống phân tích và quản lý kết quả đánh giá cuối chu kỳ. Lưu trữ kết quả, đưa ra gợi ý hành động (Thưởng/Đào tạo), và cho phép quản lý chốt kỳ.
 
 ---
 
 ## 🚀 Kịch bản Demo (Demo Workflow)
 
-Để hiểu rõ vòng lặp KPI của hệ thống, hãy thực hiện theo 4 bước sau trên giao diện:
+Để hiểu rõ cách hoạt động của vòng lặp KPI dựa trên Task, hãy thực hiện theo 4 bước sau:
 
-1. **Bước 1: Khởi tạo (T1)**
-   - Truy cập **Thiết lập KPI**.
-   - Tạo một Nhân Viên (ví dụ: "Sơn Tùng M-TP").
-   - Tạo một Dự án (ví dụ: "Music Video mới").
-   - Tạo một KPI (ví dụ: "Lượt xem YouTube", Mục tiêu: `100` Triệu view, chỉ định nhân viên và dự án vừa tạo).
+**Bước 1: Khởi tạo Dữ liệu (T1 - KPI Setup)**
+- Truy cập tab **Danh mục & KPI (T1)**.
+- Thêm một Dự án mới và một Nhân sự mới (nhập chi phí giờ và kỹ năng).
+- Chuyển sang thẻ **Danh sách Công việc (Tasks)**: Tạo mới 3-4 công việc, bao gồm 'Task' bình thường và 'Bug', gán cho nhân sự vừa tạo.
 
-2. **Bước 2: Ghi nhận công việc (T2)**
-   - Chuyển sang trang **Dữ liệu thực tế (Work Data)**.
-   - Chọn KPI "Lượt xem YouTube" và nhập số liệu thực tế (ví dụ: `120`). Hệ thống T2 sẽ lưu lại con số này.
+**Bước 2: Log thời gian & Trạng thái làm việc (T2 - Work Data)**
+- Truy cập tab **Cập nhật Tiến độ (T2)**.
+- Giao diện dạng Kanban list sẽ hiển thị các Tasks. Bấm nút **"Bắt đầu làm (Inprogress)"**, sau đó bấm **"Hoàn thành (Done)"** cho một số Task. 
+- Bạn sẽ thấy hệ thống ghi nhận lịch sử (Work Logs) ở bảng bên dưới.
 
-3. **Bước 3: Đánh giá tự động (T3)**
-   - Chuyển sang trang **Đánh giá KPI**.
-   - Bấm nút **Chạy đánh giá hệ thống (Evaluate)**.
-   - T3 sẽ tự động gọi sang T1 lấy Mục tiêu, gọi sang T2 lấy Thực tế, rồi tính ra `Performance: 120%` và định đoạt trạng thái là `"Đạt"`.
+**Bước 3: Chạy Đánh giá Tự động (T3 - Evaluation)**
+- Truy cập tab **Đánh giá Hiệu suất (T3)**.
+- Bấm **"Tính toán kết quả đánh giá"**.
+- Hệ thống (T3) sẽ thu thập danh sách Tasks hiện tại, tính toán ra **Velocity**, **Tỷ lệ hoàn thành**, **Chất lượng** và quy đổi thành điểm số (Overall Score) cho từng Dự án và Nhân sự. 
 
-4. **Bước 4: Điều chỉnh & Đề xuất (T4)**
-   - Chuyển sang trang **Điều chỉnh**.
-   - T4 sẽ nhận kết quả từ T3. Tại đây Quản lý có thể:
-     - Viết ghi chú (Nhận xét khen thưởng).
-     - Điều chỉnh tự động Tăng/Giảm mục tiêu cho kỳ tới (Ví dụ: Tăng target lên `132` Triệu view cho kỳ tiếp theo).
-     - Hoặc có thể chốt đóng chu kỳ KPI (Close KPI).
+**Bước 4: Điều chỉnh & Chốt kỳ (T4 - Adjustment)**
+- Truy cập tab **Quản lý & Điều chỉnh (T4)**.
+- Hệ thống tự động gợi ý hành động cụ thể cho những cá nhân đạt điểm xuất sắc hoặc điểm thấp.
+- Quản lý có thể nhập **"Ghi chú (Lý do thưởng/phạt)"**.
+- Bấm nút **"Chốt sổ Dữ liệu"** để khóa (Close) kết quả của phiên làm việc này, chuẩn bị cho vòng lặp KPI tiếp theo.
 
 ---
 
-## 💻 Hướng dẫn cài đặt (Installation)
+## 💻 Hướng dẫn Cài đặt (Installation)
 
-Yêu cầu môi trường: Cài đặt sẵn [Node.js](https://nodejs.org/).
+Yêu cầu môi trường đã cài đặt sẵn [Node.js](https://nodejs.org/).
 
 ### 1. Khởi chạy 4 Microservices (Backend)
-Mở 4 terminal riêng biệt, lần lượt di chuyển vào từng thư mục và chạy lệnh:
+Mở 4 cửa sổ terminal riêng biệt. Ở mỗi cửa sổ, lần lượt di chuyển vào từng thư mục và chạy lệnh:
 
 **Terminal 1:**
 ```bash
@@ -244,7 +80,7 @@ npm install
 node index.js
 ```
 
-### 2. Khởi chạy Frontend (Vite + React)
+### 2. Khởi chạy Frontend (React/Vite)
 Mở Terminal thứ 5:
 
 ```bash
@@ -253,4 +89,4 @@ npm install
 npm run dev
 ```
 
-Chương trình sẽ hiển thị một đường link Local (thường là `http://localhost:5173`). Bấm vào link đó trên trình duyệt để sử dụng hệ thống!
+Truy cập đường link hiển thị trên terminal (thường là `http://localhost:5173`) để sử dụng hệ thống!

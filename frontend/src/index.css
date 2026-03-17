@@ -54,7 +54,7 @@ select {
 
 /* --- Layout & Typography --- */
 .page-desc {
-  @apply text-base text-slate-500 mb-6;
+  @apply text-base text-slate-300 font-medium mb-6;
 }
 
 /* --- Cards --- */
