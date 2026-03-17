@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
 
 const T1 = 'http://localhost:3001'
 
@@ -13,7 +14,6 @@ export default function KPISetup() {
   const [empForm, setEmpForm] = useState({ name: '', position: '', department: '' })
   const [kpiForm, setKpiForm] = useState({ name: '', target: '', unit: '', projectId: '', employeeId: '' })
   const [showForm, setShowForm] = useState(false)
-  const [msg, setMsg] = useState('')
 
   const fetchAll = () => {
     fetch(`${T1}/api/projects`).then(r => r.json()).then(setProjects).catch(() => {})
@@ -22,7 +22,7 @@ export default function KPISetup() {
   }
   useEffect(fetchAll, [])
 
-  const flash = (m) => { setMsg(m); setTimeout(() => setMsg(''), 2500) }
+
 
   // ── CRUD Handlers ──
   const addProject = async (e) => {
@@ -32,7 +32,7 @@ export default function KPISetup() {
       body: JSON.stringify(projForm)
     })
     setProjForm({ name: '', startDate: '', endDate: '', status: 'Đang thực hiện', sprints: 0 })
-    setShowForm(false); fetchAll(); flash('Đã tạo dự án')
+    setShowForm(false); fetchAll(); toast.success('Đã tạo dự án')
   }
 
   const addEmployee = async (e) => {
@@ -42,7 +42,7 @@ export default function KPISetup() {
       body: JSON.stringify(empForm)
     })
     setEmpForm({ name: '', position: '', department: '' })
-    setShowForm(false); fetchAll(); flash('Đã tạo nhân viên')
+    setShowForm(false); fetchAll(); toast.success('Đã tạo nhân viên')
   }
 
   const addKpi = async (e) => {
@@ -52,12 +52,12 @@ export default function KPISetup() {
       body: JSON.stringify(kpiForm)
     })
     setKpiForm({ name: '', target: '', unit: '', projectId: '', employeeId: '' })
-    setShowForm(false); fetchAll(); flash('Đã tạo KPI')
+    setShowForm(false); fetchAll(); toast.success('Đã tạo KPI')
   }
 
   const deleteItem = async (type, id) => {
     await fetch(`${T1}/api/${type}/${id}`, { method: 'DELETE' })
-    fetchAll(); flash('Đã xóa')
+    fetchAll(); toast.success('Đã xóa')
   }
 
   // ── Tab config ──
@@ -71,8 +71,7 @@ export default function KPISetup() {
     <div>
       <p className="page-desc">Quản lý Projects, Employees, và KPI Definitions</p>
 
-      {/* Toast */}
-      {msg && <div className="toast-success">{msg}</div>}
+
 
       {/* Tabs */}
       <div className="flex rounded-xl overflow-hidden border border-white/[0.06] mb-6">

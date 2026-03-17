@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from 'react-toastify'
 
 const T3 = 'http://localhost:3003'
 const T4 = 'http://localhost:3004'
@@ -7,9 +8,9 @@ export default function Evaluation() {
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [evaluated, setEvaluated] = useState(false)
-  const [msg, setMsg] = useState('')
 
-  const flash = (m) => { setMsg(m); setTimeout(() => setMsg(''), 2500) }
+
+
 
   const handleEvaluate = async () => {
     setLoading(true)
@@ -17,7 +18,7 @@ export default function Evaluation() {
       const evalRes = await fetch(`${T3}/api/evaluate`)
       const evalData = await evalRes.json()
       if (!evalData.results?.length) {
-        flash('Chưa có dữ liệu KPI để đánh giá'); setLoading(false); return
+        toast.warn('Chưa có dữ liệu KPI để đánh giá'); setLoading(false); return
       }
       const adjRes = await fetch(`${T4}/api/adjust`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -26,9 +27,9 @@ export default function Evaluation() {
       const adjData = await adjRes.json()
       setResults(adjData.adjustments)
       setEvaluated(true)
-      flash('Đánh giá hoàn tất')
+      toast.success('Đánh giá hoàn tất')
     } catch {
-      flash('Lỗi kết nối. Kiểm tra T1, T2, T3, T4 đang chạy.')
+      toast.error('Lỗi kết nối. Kiểm tra T1, T2, T3, T4 đang chạy.')
     }
     setLoading(false)
   }
@@ -41,7 +42,7 @@ export default function Evaluation() {
     <div>
       <p className="page-desc">Tính toán hiệu suất bằng cách lấy dữ liệu từ T1 & T2</p>
 
-      {msg && <div className="toast-success">{msg}</div>}
+
 
       {/* Action */}
       <div className="card p-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

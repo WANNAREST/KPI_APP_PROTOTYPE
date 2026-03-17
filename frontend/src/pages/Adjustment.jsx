@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
 
 const T1 = 'http://localhost:3001'
 const T4 = 'http://localhost:3004'
@@ -36,7 +37,7 @@ const getRecommendation = (perf) => {
 
 export default function Adjustment() {
   const [adjustments, setAdjustments] = useState([])
-  const [msg, setMsg] = useState('')
+
   const [editingId, setEditingId] = useState(null)
   
   // Modal states
@@ -48,11 +49,11 @@ export default function Adjustment() {
   }
   useEffect(fetchData, [])
 
-  const flash = (m) => { setMsg(m); setTimeout(() => setMsg(''), 2500) }
+
 
   // Cập nhật trạng thái thủ công (Đạt/Không đạt)
   const toggleStatus = async (kpiId, currentStatus, isClosed) => {
-    if (isClosed) return flash('Kỳ đánh giá đã chốt, không thể sửa!');
+    if (isClosed) return toast.warn('Kỳ đánh giá đã chốt, không thể sửa!');
     const newStatus = currentStatus === 'Đạt' ? 'Không đạt' : 'Đạt'
     await fetch(`${T4}/api/adjust/${kpiId}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -99,7 +100,7 @@ export default function Adjustment() {
     setIsClosing(false)
     setShowModal(false)
     fetchData()
-    flash('Đã chốt kỳ thành công & chuyển mục tiêu sang T1!')
+    toast.success('Đã chốt kỳ thành công & chuyển mục tiêu sang T1!')
   }
 
   const passed = adjustments.filter(a => a.status === 'Đạt').length
@@ -126,7 +127,7 @@ export default function Adjustment() {
         )}
       </div>
 
-      {msg && <div className="toast-success">{msg}</div>}
+
 
       {/* Stats */}
       {adjustments.length > 0 && (

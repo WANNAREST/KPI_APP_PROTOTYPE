@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
 
 const T1 = 'http://localhost:3001'
 const T2 = 'http://localhost:3002'
@@ -7,29 +8,29 @@ export default function WorkData() {
   const [kpis, setKpis] = useState([])
   const [workData, setWorkData] = useState([])
   const [form, setForm] = useState({ kpiId: '', actual: '', note: '' })
-  const [msg, setMsg] = useState('')
+
   const fetchData = () => {
     fetch(`${T1}/api/kpis`).then(r => r.json()).then(setKpis).catch(() => {})
     fetch(`${T2}/api/workdata`).then(r => r.json()).then(setWorkData).catch(() => {})
   }
   useEffect(fetchData, [])
 
-  const flash = (m) => { setMsg(m); setTimeout(() => setMsg(''), 2500) }
+
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.kpiId || !form.actual) { flash('Vui lòng chọn KPI và nhập giá trị'); return }
+    if (!form.kpiId || !form.actual) { toast.warn('Vui lòng chọn KPI và nhập giá trị'); return }
     await fetch(`${T2}/api/workdata`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)
     })
     setForm({ kpiId: '', actual: '', note: '' })
-    fetchData(); flash('Đã ghi nhận dữ liệu')
+    fetchData(); toast.success('Đã ghi nhận dữ liệu')
   }
 
   const deleteEntry = async (id) => {
     await fetch(`${T2}/api/workdata/${id}`, { method: 'DELETE' })
-    fetchData(); flash('Đã xóa')
+    fetchData(); toast.success('Đã xóa')
   }
 
   const enriched = workData.map(w => {
@@ -41,7 +42,7 @@ export default function WorkData() {
     <div>
       <p className="page-desc">Ghi nhận dữ liệu thực tế làm được cho từng chỉ số KPI</p>
 
-      {msg && <div className="toast-success">{msg}</div>}
+
 
       {/* Form Card */}
       <div className="card mb-6">

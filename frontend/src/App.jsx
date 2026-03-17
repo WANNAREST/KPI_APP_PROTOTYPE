@@ -1,4 +1,6 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
 import KPISetup from './pages/KPISetup'
@@ -50,6 +52,7 @@ function App() {
           </Routes>
         </main>
       </div>
+      <ToastContainer position="top-right" autoClose={2500} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover theme="dark" />
     </div>
   )
 }
