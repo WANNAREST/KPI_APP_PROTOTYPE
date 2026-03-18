@@ -37,9 +37,6 @@ export default function WorkData() {
     }
   }
 
-  const deleteEntry = async (id) => {
-    toast.warn('Không thể xóa log công việc trong phiên bản này');
-  }
 
   const enrichedLogs = workLogs.map(w => {
     const emp = employees.find(e => e.id === w.employeeId);
@@ -48,9 +45,9 @@ export default function WorkData() {
 
   const getStatusColor = (status) => {
     if (status === 'Done') return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
-    if (status === 'Inprogress') return 'bg-amber-500/15 text-amber-400 border-amber-500/30';
-    if (status === 'WontDo') return 'bg-slate-500/15 text-slate-400 border-slate-500/30';
-    return 'bg-blue-500/15 text-blue-400 border-blue-500/30';
+    if (status === 'Inprogress') return 'bg-amber-500/15 text-amber-600 border-amber-500/30';
+    if (status === 'WontDo') return 'bg-stone-500/15 text-stone-600 border-stone-500/30';
+    return 'bg-teal-500/15 text-teal-600 border-teal-500/30';
   };
 
   return (
@@ -74,17 +71,17 @@ export default function WorkData() {
               </tr>
             </thead>
             <tbody>
-              {tasks.length === 0 && <tr><td colSpan="5" className="text-center py-12 text-slate-500">Chưa có công việc nào cần xử lý</td></tr>}
+              {tasks.length === 0 && <tr><td colSpan="5" className="text-center py-12 text-stone-500">Chưa có công việc nào cần xử lý</td></tr>}
               {tasks.map(t => (
                 <tr key={t.id} className="table-tr">
                   <td className="table-td">
-                    <p className="font-medium text-white">{t.name}</p>
-                    <p className="text-[10px] text-slate-500 mt-1">Dự án: {t.projectName} • Estimate: {t.estimate}d</p>
+                    <p className="font-medium text-stone-900">{t.name}</p>
+                    <p className="text-[10px] text-stone-500 mt-1">Dự án: {t.projectName} • Estimate: {t.estimate}d</p>
                   </td>
                   <td className="table-td">
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400">{t.type}</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] bg-white text-stone-600">{t.type}</span>
                   </td>
-                  <td className="table-td text-indigo-300">{t.assigneeName}</td>
+                  <td className="table-td text-rose-600">{t.assigneeName}</td>
                   <td className="table-td text-center">
                     <span className={`px-2 py-1 rounded text-xs border ${getStatusColor(t.status)}`}>
                       {t.status}
@@ -103,7 +100,7 @@ export default function WorkData() {
                         </button>
                       )}
                       {t.status !== 'Done' && t.status !== 'WontDo' && (
-                        <button onClick={() => handleStatusChange(t.id, 'WontDo')} className="text-[10px] text-slate-500 hover:text-red-400 transition" title="Hủy bỏ/Không làm nữa">
+                        <button onClick={() => handleStatusChange(t.id, 'WontDo')} className="text-[10px] text-stone-500 hover:text-red-400 transition" title="Hủy bỏ/Không làm nữa">
                           ✕
                         </button>
                       )}
@@ -134,24 +131,24 @@ export default function WorkData() {
               </tr>
             </thead>
             <tbody>
-              {enrichedLogs.length === 0 && <tr><td colSpan="6" className="text-center py-12 text-slate-600">Chưa có hoạt động nào</td></tr>}
+              {enrichedLogs.length === 0 && <tr><td colSpan="6" className="text-center py-12 text-stone-600">Chưa có hoạt động nào</td></tr>}
               {/* Reverse to show latest first */}
               {enrichedLogs.slice().reverse().map(w => (
                 <tr key={w.id} className="table-tr text-sm">
-                  <td className="table-td text-slate-500">#{w.id}</td>
-                  <td className="table-td text-xs text-slate-400">
+                  <td className="table-td text-stone-500">#{w.id}</td>
+                  <td className="table-td text-xs text-stone-600">
                     {new Date(w.timestamp).toLocaleTimeString('vi-VN')} {new Date(w.timestamp).toLocaleDateString('vi-VN')}
                   </td>
-                  <td className="table-td text-indigo-300 font-medium">{w.employeeName}</td>
-                  <td className="table-td text-white">{w.taskName}</td>
+                  <td className="table-td text-rose-600 font-medium">{w.employeeName}</td>
+                  <td className="table-td text-stone-900">{w.taskName}</td>
                   <td className="table-td">
                     <div className="flex items-center gap-2">
                       <span className={`px-2 py-0.5 rounded text-[10px] border ${getStatusColor(w.oldStatus)}`}>{w.oldStatus}</span>
-                      <span className="text-slate-500">→</span>
+                      <span className="text-stone-500">→</span>
                       <span className={`px-2 py-0.5 rounded text-[10px] border ${getStatusColor(w.newStatus)}`}>{w.newStatus}</span>
                     </div>
                   </td>
-                  <td className="table-td italic text-slate-500">{w.note}</td>
+                  <td className="table-td italic text-stone-500">{w.note}</td>
                 </tr>
               ))}
             </tbody>
@@ -161,3 +158,5 @@ export default function WorkData() {
     </div>
   )
 }
+
+

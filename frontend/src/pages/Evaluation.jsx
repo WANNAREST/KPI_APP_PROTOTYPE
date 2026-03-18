@@ -63,7 +63,7 @@ export default function Evaluation() {
       <div className="card p-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="card-title mb-1">Tính toán kết quả đánh giá</h2>
-          <p className="text-xs text-slate-500">T3 gọi API đến T1 (mục tiêu) và T2 (thực tế), tính hiệu suất (%) → gửi qua T4 lưu trạng thái.</p>
+          <p className="text-xs text-stone-500">T3 gọi API đến T1 (mục tiêu) và T2 (thực tế), tính hiệu suất (%) → gửi qua T4 lưu trạng thái.</p>
         </div>
         <button onClick={handleEvaluate} disabled={loading}
           className="btn-primary disabled:opacity-50 whitespace-nowrap">
@@ -74,17 +74,17 @@ export default function Evaluation() {
       {/* Stats */}
       {evaluated && (
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="card p-4 text-center">
-            <p className="text-2xl font-bold text-indigo-400">{projectResults.length}</p>
-            <p className="text-xs text-slate-500 mt-1">Dự án được đánh giá</p>
+          <div className="bg-white/80 border border-stone-200 p-4 rounded-xl text-center">
+            <p className="text-xs text-stone-600 mb-1">Dự án cần review</p>
+            <p className="text-2xl font-bold text-rose-500">{projectResults.length}</p>
           </div>
-          <div className="card p-4 text-center">
-            <p className="text-2xl font-bold text-indigo-400">{employeeResults.length}</p>
-            <p className="text-xs text-slate-500 mt-1">Nhân sự được đánh giá</p>
+          <div className="bg-white/80 border border-stone-200 p-4 rounded-xl text-center">
+            <p className="text-xs text-stone-600 mb-1">Nhân sự cần chốt</p>
+            <p className="text-2xl font-bold text-rose-500">{employeeResults.length}</p>
           </div>
-          <div className="card p-4 text-center">
+          <div className="bg-white/80 border border-stone-200 p-4 rounded-xl text-center">
+            <p className="text-xs text-stone-600 mb-1">Mức độ hoàn thành TB</p>
             <p className="text-2xl font-bold text-emerald-400">{avg}%</p>
-            <p className="text-xs text-slate-500 mt-1">Điểm hiệu suất TB</p>
           </div>
         </div>
       )}
@@ -108,30 +108,30 @@ export default function Evaluation() {
             </thead>
             <tbody>
               {results.length === 0 && (
-                <tr><td colSpan="6" className="text-center py-16 text-slate-600">
+                <tr><td colSpan="6" className="text-center py-16 text-stone-600">
                   Nhấn "Tính toán kết quả" để phân tích dữ liệu hiệu suất
                 </td></tr>
               )}
               {results.map(r => (
                 <tr key={`${r.type}-${r.targetId}`} className="table-tr">
                   <td className="table-td">
-                    <p className="font-medium text-white">{r.name}</p>
-                    <span className={`px-2 py-0.5 mt-1 inline-block rounded text-[10px] ${r.type === 'Project' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                    <p className="font-semibold text-stone-800">{r.name}</p>
+                    <span className={`px-2 py-0.5 mt-1 inline-block rounded-lg text-[10px] font-bold ${r.type === 'Project' ? 'bg-amber-500/10 text-amber-500' : 'bg-teal-500/10 text-teal-600'}`}>
                       {r.type === 'Project' ? 'Dự án' : 'Nhân sự'}
                     </span>
                   </td>
                   <td className="table-td text-center font-medium text-amber-300">{r.velocity}</td>
-                  <td className="table-td text-center text-slate-300">{r.completionRate}%</td>
-                  <td className="table-td text-center text-slate-300">
-                    <span className={r.quality >= 90 ? 'text-emerald-400' : r.quality >= 70 ? 'text-amber-400' : 'text-red-400'}>
+                  <td className="table-td text-center text-stone-700">{r.completionRate}%</td>
+                  <td className="table-td text-center text-stone-700">
+                    <span className={r.quality >= 90 ? 'text-emerald-400' : r.quality >= 70 ? 'text-amber-600' : 'text-red-400'}>
                       {r.quality}%
                     </span>
                   </td>
-                  <td className="table-td text-center text-slate-300">{r.cycleTime.toFixed(1)}</td>
+                  <td className="table-td text-center text-stone-700">{r.cycleTime.toFixed(1)}</td>
                   
                   <td className="table-td-center">
                     <div className="flex flex-col items-center justify-center gap-1">
-                      <span className={`text-base font-bold ${r.overallScore >= 80 ? 'text-emerald-400' : r.overallScore >= 60 ? 'text-amber-400' : 'text-red-400'}`}>
+                      <span className={`text-base font-bold ${r.overallScore >= 80 ? 'text-emerald-400' : r.overallScore >= 60 ? 'text-amber-600' : 'text-red-400'}`}>
                         {r.overallScore} điểm
                       </span>
                       <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden">
@@ -149,3 +149,5 @@ export default function Evaluation() {
     </div>
   )
 }
+
+
