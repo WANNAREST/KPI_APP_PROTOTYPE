@@ -1,7 +1,6 @@
 # 🚀 Kịch Bản Demo: Hệ thống Quản lý KPI (Microservices)
 
 Tài liệu này hướng dẫn chi tiết từng bước để demo toàn bộ vòng đời (lifecycle) của việc quản lý hiệu suất dựa trên Task (Công việc) qua 4 Microservices (T1, T2, T3, T4). Đồng thời, giải thích rõ cách dữ liệu luân chuyển và các API giao tiếp với nhau.
-
 ---
 
 ## 🎬 TÓM TẮT LUỒNG DỮ LIỆU (DATA FLOW)
