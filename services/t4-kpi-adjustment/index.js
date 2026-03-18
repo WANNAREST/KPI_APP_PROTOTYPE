@@ -14,33 +14,68 @@ app.use(express.json());
 let adjustments = [];
 let nextId = 1;
 
+const axios = require('axios');
+const T1_URL = 'http://localhost:3001';
+
 // POST — Cập nhật trạng thái KPI (nhận kết quả từ T3)
-app.post('/api/adjust', (req, res) => {
+app.post('/api/adjust', async (req, res) => {
   const { results } = req.body;
 
   if (!results || !Array.isArray(results)) {
     return res.status(400).json({ error: 'Vui lòng cung cấp mảng results' });
   }
 
-  const newAdjustments = results.map(r => {
-    // Unique identifier for this assessment: type + id
+  const newAdjustments = await Promise.all(results.map(async r => {
+    // Check deviation > 20% for any metric
+    let needsAdjustment = false;
+    let suggestions = [];
+
+    const check = (actual, target, name) => {
+      if (!target || target === 0) return;
+      const deviation = Math.abs(actual - target) / target;
+      if (deviation > 0.20) {
+        needsAdjustment = true;
+        suggestions.push(`${name} lệch ${Math.round(deviation * 100)}% (Thực tế: ${actual}, Mục tiêu: ${target})`);
+      }
+    };
+
+    check(r.velocity.actual, r.velocity.target, 'Velocity');
+    check(r.quality.actual, r.quality.target, 'Quality');
+    check(r.cycleTime.actual, r.cycleTime.target, 'Cycle Time');
+    check(r.completionRate.actual, r.completionRate.target, 'Completion Rate');
+
     const existingIdx = adjustments.findIndex(a => a.type === r.type && a.targetId === r.id);
     const adjustment = {
       id: existingIdx !== -1 ? adjustments[existingIdx].id : nextId++,
-      type: r.type, // 'Project' or 'Employee'
-      targetId: r.id, // Project ID or Employee ID
+      type: r.type,
+      targetId: r.id,
       name: r.name,
-      velocity: r.velocity,
-      completionRate: r.completionRate,
-      quality: r.quality,
-      cycleTime: r.cycleTime,
+      metrics: {
+        velocity: r.velocity,
+        quality: r.quality,
+        cycleTime: r.cycleTime,
+        completionRate: r.completionRate
+      },
       overallScore: r.overallScore,
-      
+      needsAdjustment,
+      suggestions,
       adjustedAt: new Date().toISOString(),
-      note: existingIdx !== -1 ? adjustments[existingIdx].note : '',
-      nextTarget: existingIdx !== -1 ? adjustments[existingIdx].nextTarget : Math.round(r.overallScore * 1.1),
       isClosed: existingIdx !== -1 ? adjustments[existingIdx].isClosed : false
     };
+
+    // Auto feedback loop if needsAdjustment is true and it's a Project
+    if (needsAdjustment && r.type === 'Project') {
+      try {
+        await axios.post(`${T1_URL}/api/config/update`, {
+          projectId: r.id,
+          suggestions: suggestions
+        });
+        console.log(`[T4] Đã gửi yêu cầu điều chỉnh tự động cho Dự án #${r.id}`);
+        adjustment.feedbackSent = true;
+      } catch (err) {
+        console.error(`[T4] Lỗi gửi feedback tới T1 cho Dự án #${r.id}:`, err.message);
+      }
+    }
 
     if (existingIdx !== -1) {
       adjustments[existingIdx] = adjustment;
@@ -48,9 +83,9 @@ app.post('/api/adjust', (req, res) => {
       adjustments.push(adjustment);
     }
     return adjustment;
-  });
+  }));
 
-  console.log(`[T4] Đã lưu kết quả cho ${newAdjustments.length} đối tượng`);
+  console.log(`[T4] Đã phân tích điều chỉnh cho ${newAdjustments.length} đối tượng`);
   res.json({ adjustments: newAdjustments });
 });
 

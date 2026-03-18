@@ -127,12 +127,21 @@ export default function Adjustment() {
                       <span className={`text-xl font-bold tracking-tight ${isPass ? 'text-emerald-400' : 'text-amber-600'}`}>
                         {a.overallScore}đ
                       </span>
-                      <p className="text-[10px] text-stone-500 whitespace-nowrap">Vel: {a.velocity} | Cmp: {a.completionRate}%</p>
+                      <p className="text-[10px] text-stone-500 whitespace-nowrap">Vel: {a.metrics.velocity.actual} | Cmp: {a.metrics.completionRate.actual}%</p>
                     </td>
                     <td className="table-td">
-                      <span className={`inline-flex items-center px-2 py-1 rounded text-[11px] font-medium border ${rec.color}`}>
-                        {rec.text}
-                      </span>
+                      {a.needsAdjustment ? (
+                        <div className="space-y-1">
+                          <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-500 text-[10px] font-bold border border-red-500/20">CẦN ĐIỀU CHỈNH</span>
+                          {a.suggestions.map((s, idx) => (
+                            <p key={idx} className="text-[10px] text-stone-500 italic">• {s}</p>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className={`inline-flex items-center px-2 py-1 rounded text-[11px] font-medium border ${rec.color}`}>
+                          {rec.text}
+                        </span>
+                      )}
                     </td>
                     <td className="table-td-center">
                       <span className={`inline-flex items-center px-3 py-1 rounded text-xs font-semibold ${

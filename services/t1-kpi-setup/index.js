@@ -4,17 +4,43 @@ const app = express();
 const PORT = 3001;
 app.use(cors());
 app.use(express.json());
-let projects = [];
-let employees = [];
+let projects = [
+  {
+    id: 1,
+    name: "Hệ thống Quản lý KPI Nội bộ",
+    startDate: "2026-03-01",
+    endDate: "2026-06-01",
+    status: "Planning",
+    sprints: 4,
+    requirements: {
+      taskList: [
+        { name: "Thiết kế Schema DB", skill: "SQL", weight: 5 },
+        { name: "Viết API Core", skill: "NodeJS", weight: 8 },
+        { name: "Giao diện Dashboard", skill: "React", weight: 7 },
+        { name: "Viết Unit Test", skill: "Jest", weight: 4 }
+      ]
+    },
+    createdAt: new Date().toISOString()
+  }
+];
+let employees = [
+  { id: 1, name: "Nguyễn Văn A", position: "Backend Lead", department: "Kỹ thuật", costPerHour: 50, skills: { "NodeJS": 5, "SQL": 4, "Docker": 3 } },
+  { id: 2, name: "Trần Thị B", position: "Frontend Dev", department: "Kỹ thuật", costPerHour: 40, skills: { "React": 5, "CSS": 5, "Figma": 4 } },
+  { id: 3, name: "Lê Văn C", position: "Fullstack Dev", department: "Kỹ thuật", costPerHour: 45, skills: { "NodeJS": 4, "React": 4, "SQL": 5 } },
+  { id: 4, name: "Phạm Thị D", position: "Tester", department: "QC", costPerHour: 30, skills: { "Jest": 5, "Manual Test": 5, "Automation": 4 } }
+];
 let kpis = [];
 let tasks = [];
-let assets = [];
+let assets = [
+  { id: 1, code: "LAP_001", name: "MacBook Pro M2", type: "Laptop", projectId: 1, status: "using", createdAt: new Date().toISOString() },
+  { id: 2, code: "LAP_002", name: "Dell XPS 15", type: "Laptop", projectId: null, status: "available", createdAt: new Date().toISOString() }
+];
 
-let nextProjectId = 1;
-let nextEmployeeId = 1;
+let nextProjectId = 2;
+let nextEmployeeId = 5;
 let nextKpiId = 1;
 let nextTaskId = 1;
-let nextAssetId = 1;
+let nextAssetId = 3;
 
 // ─────────────── PROJECTS ───────────────
 // GET — Danh sách dự án
@@ -23,7 +49,7 @@ app.get('/api/projects', (req, res) => {
 });
 // POST — Tạo dự án mới
 app.post('/api/projects', (req, res) => {
-  const { name, startDate, endDate, status, sprints } = req.body;
+  const { name, startDate, endDate, status, sprints, requirements } = req.body;
   if (!name) {
     return res.status(400).json({ error: 'Tên dự án là bắt buộc' });
   }
@@ -33,7 +59,8 @@ app.post('/api/projects', (req, res) => {
     startDate: startDate || new Date().toISOString().split('T')[0],
     endDate: endDate || '',
     status: status || 'Đang thực hiện',
-    sprints: sprints || 0,
+    sprints: Number(sprints) || 1,
+    requirements: requirements || { taskList: [] }, // { taskList: [{ name, skill, weight }] }
     createdAt: new Date().toISOString()
   };
   projects.push(project);
@@ -250,6 +277,141 @@ app.put('/api/assets/:id', (req, res) => {
   
   console.log(`[T1] Đã cập nhật Asset #${asset.id}`);
   res.json(asset);
+});
+
+// ─────────────── ASSIGNMENT LOGIC ───────────────
+
+// GET — Preview Assignment
+app.get('/api/projects/:id/assign/preview', (req, res) => {
+  const projectId = Number(req.params.id);
+  const { algo } = req.query; // 'skill' or 'roundrobin'
+  const project = projects.find(p => p.id === projectId);
+  
+  if (!project) return res.status(404).json({ error: 'Không tìm thấy dự án' });
+  if (!project.requirements || !project.requirements.taskList) {
+    return res.status(400).json({ error: 'Dự án chưa có yêu cầu công việc' });
+  }
+
+  const tasksToAssign = project.requirements.taskList;
+  const availableEmployees = employees; // In real case, filter by availability
+  
+  if (availableEmployees.length === 0) {
+    return res.status(400).json({ error: 'Không có nhân viên trong hệ thống' });
+  }
+
+  let assignments = [];
+
+  if (algo === 'roundrobin') {
+    tasksToAssign.forEach((t, index) => {
+      const emp = availableEmployees[index % availableEmployees.length];
+      assignments.push({
+        taskName: t.name,
+        skillRequired: t.skill,
+        weight: t.weight,
+        assigneeId: emp.id,
+        assigneeName: emp.name,
+        matchScore: 100 // Default for RR
+      });
+    });
+  } else {
+    // Skill Match
+    tasksToAssign.forEach(t => {
+      let bestMatch = null;
+      let highestScore = -1;
+
+      availableEmployees.forEach(emp => {
+        let score = 0;
+        // Check exact or partial match
+        const taskSkill = (t.skill || '').toLowerCase();
+        
+        // emp.skills is { "SkillName": level }
+        Object.keys(emp.skills || {}).forEach(empSkillName => {
+          const sName = empSkillName.toLowerCase();
+          if (sName.includes(taskSkill) || taskSkill.includes(sName)) {
+            score = (emp.skills[empSkillName] || 0) * 20; // 1-5 scale to 100
+          }
+        });
+
+        if (score > highestScore) {
+          highestScore = score;
+          bestMatch = emp;
+        }
+      });
+
+      // If no match found, fallback to first available or round robin logic
+      const assignee = bestMatch || availableEmployees[0];
+      assignments.push({
+        taskName: t.name,
+        skillRequired: t.skill,
+        weight: t.weight,
+        assigneeId: assignee.id,
+        assigneeName: assignee.name,
+        matchScore: highestScore > 0 ? highestScore : 0
+      });
+    });
+  }
+
+  res.json({ assignments });
+});
+
+// POST — Commit Assignment
+app.post('/api/projects/:id/assign/commit', (req, res) => {
+  const projectId = Number(req.params.id);
+  const { assignments } = req.body;
+  const project = projects.find(p => p.id === projectId);
+
+  if (!project) return res.status(404).json({ error: 'Không tìm thấy dự án' });
+  
+  // 1. Create Tasks based on assignments
+  const createdTasks = assignments.map(a => {
+    const task = {
+      id: nextTaskId++,
+      projectId,
+      assigneeId: a.assigneeId,
+      name: a.taskName,
+      status: 'Todo',
+      type: 'Task',
+      estimate: a.weight,
+      skillsRequired: { [a.skillRequired]: 3 },
+      taskWeight: Number(a.weight),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    tasks.push(task);
+    return task;
+  });
+
+  // 2. Initialize KPI Targets for this project
+  const metrics = [
+    { name: 'Velocity', target: assignments.reduce((s, a) => s + Number(a.weight), 0) / (project.sprints || 1), unit: 'pts/sprint' },
+    { name: 'Quality', target: 95, unit: '%' },
+    { name: 'Cycle Time', target: 3, unit: 'days' },
+    { name: 'Completion Rate', target: 100, unit: '%' }
+  ];
+
+  metrics.forEach(m => {
+    kpis.push({
+      id: nextKpiId++,
+      name: m.name,
+      target: m.target,
+      unit: m.unit,
+      projectId,
+      createdAt: new Date().toISOString()
+    });
+  });
+
+  project.status = 'In Progress';
+
+  console.log(`[T1] Đã phê duyệt phân công và khởi tạo KPI cho dự án #${projectId}`);
+  res.json({ message: 'Assignment committed successfully', createdTasks });
+});
+
+// POST — Update Configuration (Feedback Loop from T4)
+app.post('/api/config/update', (req, res) => {
+  const { projectId, suggestions } = req.body;
+  console.log(`[T1] Nhận yêu cầu điều chỉnh từ T4 cho dự án #${projectId}:`, suggestions);
+  // In a real system, this would update weights or project parameters
+  res.json({ message: 'Configuration updated based on feedback', suggestions });
 });
 
 // ─────────────── STATS ───────────────

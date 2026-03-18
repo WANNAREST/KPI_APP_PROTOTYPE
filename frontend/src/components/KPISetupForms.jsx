@@ -29,6 +29,15 @@ export const ProjectForm = ({ addProject, projForm, setProjForm, onCancel }) => 
       <input type="number" placeholder="0" value={projForm.sprints || ''} onChange={e => setProjForm({ ...projForm, sprints: Number(e.target.value) })}
         className="form-input" />
     </div>
+    <div className="col-span-2 lg:col-span-3">
+      <label className="form-label">Yêu cầu công việc (Tên Task : Kỹ năng : Trọng số)</label>
+      <textarea 
+        placeholder="Ví dụ:&#10;Thiết kế UI : Figma : 3&#10;Code Backend : NodeJS : 5" 
+        value={projForm.requirementsTxt || ''} 
+        onChange={e => setProjForm({ ...projForm, requirementsTxt: e.target.value })}
+        rows="4"
+        className="form-input" />
+    </div>
     <div className="flex justify-end gap-3 pt-4 border-t border-stone-200 col-span-2 lg:col-span-3 mt-2">
       <button type="button" onClick={onCancel} className="px-5 py-2.5 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50 transition cursor-pointer">Hủy</button>
       <button type="submit" className="btn-primary">Tạo dự án</button>

@@ -1,4 +1,4 @@
-export const ProjectTable = ({ projects, deleteItem }) => (
+export const ProjectTable = ({ projects, deleteItem, onAssign }) => (
   <table className="table-main">
     <thead><tr>
       <th className="table-th">ID</th>
@@ -23,7 +23,12 @@ export const ProjectTable = ({ projects, deleteItem }) => (
               }`}>{p.status}</span>
           </td>
           <td className="table-td">{p.sprints}</td>
-          <td className="table-td-right">
+          <td className="table-td-right flex gap-2 justify-end">
+            {p.status === 'Planning' && (
+              <button onClick={() => onAssign(p.id)} className="px-3 py-1 bg-rose-500 text-white text-[10px] font-bold rounded-lg hover:bg-rose-600 shadow-md">
+                Phân công
+              </button>
+            )}
             <button onClick={() => deleteItem('projects', p.id)} className="btn-danger-text">Xóa</button>
           </td>
         </tr>

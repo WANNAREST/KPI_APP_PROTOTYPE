@@ -24,7 +24,7 @@ app.get('/api/worklogs', (req, res) => {
 // Cập nhật trạng thái Task (tương đương với việc "làm việc")
 app.post('/api/workdata/tasks/:taskId/status', async (req, res) => {
   const taskId = Number(req.params.taskId);
-  const { status, note, employeeId } = req.body;
+  const { status, note, employeeId, bugCount, actualStartTime, actualEndTime } = req.body;
 
   if (!status) {
     return res.status(400).json({ error: 'Cần cung cấp status mới' });
@@ -38,11 +38,16 @@ app.post('/api/workdata/tasks/:taskId/status', async (req, res) => {
     
     if (!task) return res.status(404).json({ error: 'Không tìm thấy Task trên T1' });
 
-    // 2. Cập nhật status sang T1
+    // 2. Cập nhật status và data sang T1
     const updRes = await fetch(`${T1_URL}/api/tasks/${taskId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status })
+      body: JSON.stringify({ 
+        status,
+        actualStartTime: actualStartTime || task.actualStartTime,
+        actualEndTime: actualEndTime || task.actualEndTime,
+        bugCount: (Number(task.bugCount) || 0) + (Number(bugCount) || 0)
+      })
     });
 
     if (!updRes.ok) throw new Error('Cập nhật T1 thất bại');
@@ -55,6 +60,9 @@ app.post('/api/workdata/tasks/:taskId/status', async (req, res) => {
       employeeId: employeeId || task.assigneeId,
       oldStatus: task.status,
       newStatus: status,
+      bugCount: Number(bugCount) || 0,
+      actualStartTime: actualStartTime || null,
+      actualEndTime: actualEndTime || null,
       note: note || `Đổi trạng thái thành ${status}`,
       timestamp: new Date().toISOString()
     };

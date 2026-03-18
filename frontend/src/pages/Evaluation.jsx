@@ -120,14 +120,14 @@ export default function Evaluation() {
                       {r.type === 'Project' ? 'Dự án' : 'Nhân sự'}
                     </span>
                   </td>
-                  <td className="table-td text-center font-medium text-amber-300">{r.velocity}</td>
-                  <td className="table-td text-center text-stone-700">{r.completionRate}%</td>
+                  <td className="table-td text-center font-medium text-amber-300">{r.metrics?.velocity?.actual || 0} / {r.metrics?.velocity?.target || 0}</td>
+                  <td className="table-td text-center text-stone-700">{r.metrics?.completionRate?.actual || 0}% / {r.metrics?.completionRate?.target || 0}%</td>
                   <td className="table-td text-center text-stone-700">
-                    <span className={r.quality >= 90 ? 'text-emerald-400' : r.quality >= 70 ? 'text-amber-600' : 'text-red-400'}>
-                      {r.quality}%
+                    <span className={(r.metrics?.quality?.actual || 0) >= 90 ? 'text-emerald-400' : (r.metrics?.quality?.actual || 0) >= 70 ? 'text-amber-600' : 'text-red-400'}>
+                      {r.metrics?.quality?.actual || 0}%
                     </span>
                   </td>
-                  <td className="table-td text-center text-stone-700">{r.cycleTime.toFixed(1)}</td>
+                  <td className="table-td text-center text-stone-700">{r.metrics?.cycleTime?.actual || 0}d / {r.metrics?.cycleTime?.target || 0}d</td>
                   
                   <td className="table-td-center">
                     <div className="flex flex-col items-center justify-center gap-1">

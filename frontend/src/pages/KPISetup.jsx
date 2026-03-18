@@ -14,12 +14,17 @@ export default function KPISetup() {
   const [tasks, setTasks] = useState([])
   const [assets, setAssets] = useState([])
   // ── Form states ──
-  const [projForm, setProjForm] = useState({ name: '', startDate: '', endDate: '', status: 'Đang thực hiện', sprints: 0 })
+  const [projForm, setProjForm] = useState({ name: '', startDate: '', endDate: '', status: 'Planning', sprints: 1, requirementsTxt: '' })
   const [empForm, setEmpForm] = useState({ name: '', position: '', department: '', costPerHour: 10, skills: '' })
   const [kpiForm, setKpiForm] = useState({ name: '', target: '', unit: '', projectId: '', employeeId: '' })
   const [taskForm, setTaskForm] = useState({ name: '', projectId: '', assigneeId: '', type: 'Task', estimate: 1, taskWeight: 1, tags: '' })
   const [assetForm, setAssetForm] = useState({ name: '', code: '', type: 'Laptop', projectId: '', status: 'available' })
   const [showForm, setShowForm] = useState(false)
+  
+  // ── Assignment Preview States ──
+  const [assignModal, setAssignModal] = useState({ isOpen: false, projectId: null, algo: 'skill' })
+  const [previewData, setPreviewData] = useState([])
+  const [loadingPreview, setLoadingPreview] = useState(false)
   const fetchAll = () => {
     fetch(`${T1}/api/projects`).then(r => r.json()).then(setProjects).catch(() => {})
     fetch(`${T1}/api/employees`).then(r => r.json()).then(setEmployees).catch(() => {})
@@ -31,13 +36,28 @@ export default function KPISetup() {
   // ── CRUD Handlers ──
   const addProject = async (e) => {
     e.preventDefault()
+    // Parse requirementsTxt into taskList
+    let taskList = [];
+    if (projForm.requirementsTxt) {
+      projForm.requirementsTxt.split('\n').forEach(line => {
+        const parts = line.split(':');
+        if (parts.length >= 2) {
+          taskList.push({
+            name: parts[0].trim(),
+            skill: parts[1].trim(),
+            weight: Number(parts[2]) || 1
+          });
+        }
+      });
+    }
+
     try {
       const res = await fetch(`${T1}/api/projects`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(projForm)
+        body: JSON.stringify({ ...projForm, requirements: { taskList } })
       });
       if (!res.ok) throw new Error((await res.json()).error || 'Lỗi hệ thống');
-      setProjForm({ name: '', startDate: '', endDate: '', status: 'Đang thực hiện', sprints: 0 })
+      setProjForm({ name: '', startDate: '', endDate: '', status: 'Planning', sprints: 1, requirementsTxt: '' })
       setShowForm(false); fetchAll(); toast.success('Đã tạo dự án')
     } catch (err) { toast.error(err.message) }
   }
@@ -111,6 +131,37 @@ export default function KPISetup() {
     } catch (err) { toast.error(err.message) }
   }
 
+  // ── Assignment Logic ──
+  const fetchPreview = async (projectId, algo) => {
+    setLoadingPreview(true);
+    try {
+      const res = await fetch(`${T1}/api/projects/${projectId}/assign/preview?algo=${algo}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Lỗi preview');
+      setPreviewData(data.assignments);
+    } catch (err) { toast.error(err.message) }
+    setLoadingPreview(false);
+  }
+
+  const commitAssignment = async () => {
+    try {
+      const res = await fetch(`${T1}/api/projects/${assignModal.projectId}/assign/commit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignments: previewData })
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Lỗi commit');
+      toast.success('Đã phê duyệt phân công và tạo KPI');
+      setAssignModal({ isOpen: false, projectId: null, algo: 'skill' });
+      fetchAll();
+    } catch (err) { toast.error(err.message) }
+  }
+
+  const openAssignModal = (projectId) => {
+    setAssignModal({ isOpen: true, projectId, algo: 'skill' });
+    fetchPreview(projectId, 'skill');
+  }
+
   // ── Tab config ──
   const tabs = [
     { key: 'projects', label: 'Projects', count: projects.length },
@@ -180,13 +231,75 @@ export default function KPISetup() {
 
         {/* ── Tables ── */}
         <div className="table-container pt-2 pb-2">
-          {tab === 'projects' && <ProjectTable projects={projects} deleteItem={deleteItem} />}
+          {tab === 'projects' && <ProjectTable projects={projects} deleteItem={deleteItem} onAssign={openAssignModal} />}
           {tab === 'employees' && <EmployeeTable employees={employees} deleteItem={deleteItem} />}
           {tab === 'tasks' && <TaskTable tasks={tasks} deleteItem={deleteItem} />}
           {tab === 'assets' && <AssetTable assets={assets} deleteItem={deleteItem} />}
           {tab === 'kpis' && <KpiTable kpis={kpis} deleteItem={deleteItem} />}
         </div>
       </div>
+
+      {/* ── Assignment Preview Modal ── */}
+      <Modal 
+        isOpen={assignModal.isOpen} 
+        onClose={() => setAssignModal({ ...assignModal, isOpen: false })}
+        title="Phân công công việc tự động"
+        maxWidth="max-w-4xl"
+      >
+        <div className="space-y-6">
+          <div className="flex items-center gap-6 p-4 bg-stone-100 rounded-xl">
+            <span className="text-sm font-bold text-stone-700">Chọn giải thuật:</span>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => { setAssignModal({...assignModal, algo: 'skill'}); fetchPreview(assignModal.projectId, 'skill') }}
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${assignModal.algo === 'skill' ? 'bg-rose-500 text-white shadow-lg' : 'bg-white text-stone-600 border border-stone-200'}`}
+              >
+                Skill Match
+              </button>
+              <button 
+                onClick={() => { setAssignModal({...assignModal, algo: 'roundrobin'}); fetchPreview(assignModal.projectId, 'roundrobin') }}
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${assignModal.algo === 'roundrobin' ? 'bg-rose-500 text-white shadow-lg' : 'bg-white text-stone-600 border border-stone-200'}`}
+              >
+                Round Robin
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-hidden border border-stone-200 rounded-xl">
+            <table className="w-full text-left">
+              <thead className="bg-stone-50 border-b border-stone-200">
+                <tr>
+                  <th className="px-4 py-3 text-xs font-bold text-stone-500">Tên Task</th>
+                  <th className="px-4 py-3 text-xs font-bold text-stone-500">Yêu cầu</th>
+                  <th className="px-4 py-3 text-xs font-bold text-stone-500">Phân công</th>
+                  <th className="px-4 py-3 text-xs font-bold text-stone-500 text-right">Độ phù hợp</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-stone-100">
+                {loadingPreview ? (
+                  <tr><td colSpan="4" className="px-4 py-10 text-center text-stone-400">Đang tính toán...</td></tr>
+                ) : previewData.map((a, i) => (
+                  <tr key={i} className="hover:bg-stone-50 transition-colors">
+                    <td className="px-4 py-3 text-sm font-medium text-stone-900">{a.taskName}</td>
+                    <td className="px-4 py-3 text-xs text-stone-600">{a.skillRequired} (v{a.weight})</td>
+                    <td className="px-4 py-3 text-sm text-rose-600 font-bold">{a.assigneeName}</td>
+                    <td className="px-4 py-3 text-sm text-right font-mono">{a.matchScore}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-6 border-t border-stone-200">
+            <button onClick={() => setAssignModal({ ...assignModal, isOpen: false })} className="px-6 py-2 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-100">
+              Hủy
+            </button>
+            <button onClick={commitAssignment} className="px-6 py-2 bg-stone-900 text-white rounded-lg text-sm font-medium hover:bg-stone-800 shadow-xl">
+              Phê duyệt & Tạo KPI
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

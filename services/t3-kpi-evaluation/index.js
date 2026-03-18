@@ -20,79 +20,98 @@ app.use(express.json());
 app.get('/api/evaluate', async (req, res) => {
   try {
     // 1. Fetch data from T1
-    const [tasksRes, projsRes, empsRes] = await Promise.all([
+    const [tasksRes, projsRes, empsRes, kpisRes] = await Promise.all([
       axios.get(`${T1_URL}/api/tasks`),
       axios.get(`${T1_URL}/api/projects`),
-      axios.get(`${T1_URL}/api/employees`)
+      axios.get(`${T1_URL}/api/employees`),
+      axios.get(`${T1_URL}/api/kpis`)
     ]);
 
     const tasks = tasksRes.data;
     const projects = projsRes.data;
     const employees = empsRes.data;
+    const kpis = kpisRes.data;
 
     if (tasks.length === 0) {
       return res.json({ message: 'Chưa có công việc nào để đánh giá', results: [] });
     }
 
+    // Helper functions
+    const calculateMetrics = (targetTasks, targetKpis) => {
+      const totalTasks = targetTasks.length;
+      const doneTasks = targetTasks.filter(t => t.status === 'Done');
+      
+      // 1. Velocity: Sum taskWeight of Done tasks
+      const velocityActual = doneTasks.reduce((sum, t) => sum + (Number(t.taskWeight) || 0), 0);
+      
+      // 2. Quality: (Done - Bugs) / Done
+      const totalBugs = targetTasks.reduce((sum, t) => sum + (Number(t.bugCount) || 0), 0);
+      const qualityActual = doneTasks.length > 0 ? Math.max(0, (doneTasks.length - totalBugs) / doneTasks.length) * 100 : 100;
+
+      // 3. Cycle Time: Average of (End - Start)
+      let totalCycleTime = 0;
+      let tasksWithTime = 0;
+      doneTasks.forEach(t => {
+        if (t.actualStartTime && t.actualEndTime) {
+          const start = new Date(t.actualStartTime);
+          const end = new Date(t.actualEndTime);
+          const diffDays = (end - start) / (1000 * 60 * 60 * 24);
+          if (diffDays > 0) {
+            totalCycleTime += diffDays;
+            tasksWithTime++;
+          }
+        }
+      });
+      const cycleTimeActual = tasksWithTime > 0 ? (totalCycleTime / tasksWithTime) : 3; // Default 3 if no data
+
+      // 4. Completion Rate: Done / Total
+      const completionRateActual = totalTasks > 0 ? (doneTasks.length / totalTasks) * 100 : 0;
+
+      // Map to targets
+      const findTarget = (name) => targetKpis.find(k => k.name === name)?.target || 1;
+
+      return {
+        velocity: { actual: velocityActual, target: findTarget('Velocity') },
+        quality: { actual: Math.round(qualityActual), target: findTarget('Quality') },
+        cycleTime: { actual: Number(cycleTimeActual.toFixed(1)), target: findTarget('Cycle Time') },
+        completionRate: { actual: Math.round(completionRateActual), target: findTarget('Completion Rate') }
+      };
+    };
+
     // --- Tính toán ở mức Project ---
     const projectResults = projects.map(proj => {
       const projTasks = tasks.filter(t => t.projectId === proj.id);
-      const totalTasks = projTasks.length;
-      const doneTasks = projTasks.filter(t => t.status === 'Done');
-      
-      // 1. Velocity: Tổng taskWeight của các task Done
-      const velocity = doneTasks.reduce((sum, t) => sum + (Number(t.taskWeight) || 0), 0);
-      
-      // 2. Completion Rate: (Done / Total)
-      const completionRate = totalTasks > 0 ? (doneTasks.length / totalTasks) : 0;
-      
-      // 3. Quality: 1 - (Bugs Done / Total Done) (Simplified)
-      const doneBugs = doneTasks.filter(t => t.type === 'Bug').length;
-      const quality = doneTasks.length > 0 ? (1 - (doneBugs / doneTasks.length)) : 1; // Default 1 (100%) if no tasks done yet
-
-      // 4. CycleTime Index (Mock: giả sử đúng tiến độ là 1.0)
-      const cycleTime = 1.0; 
+      const projKpis = kpis.filter(k => k.projectId === proj.id);
+      const metrics = calculateMetrics(projTasks, projKpis);
 
       return {
         type: 'Project',
         id: proj.id,
         name: proj.name,
-        velocity: Math.round(velocity),
-        completionRate: Math.round(completionRate * 100),
-        quality: Math.round(quality * 100),
-        cycleTime,
-        overallScore: Math.round((completionRate * 0.4 + quality * 0.4 + (cycleTime === 1.0 ? 0.2 : 0)) * 100)
+        ...metrics,
+        overallScore: Math.round((metrics.completionRate.actual * 0.4 + metrics.quality.actual * 0.4 + 20) ) // Simplified score
       };
     });
 
     // --- Tính toán ở mức Employee ---
     const employeeResults = employees.map(emp => {
       const empTasks = tasks.filter(t => t.assigneeId === emp.id);
-      const totalTasks = empTasks.length;
-      const doneTasks = empTasks.filter(t => t.status === 'Done');
-      
-      const velocity = doneTasks.reduce((sum, t) => sum + (Number(t.taskWeight) || 0), 0);
-      const completionRate = totalTasks > 0 ? (doneTasks.length / totalTasks) : 0;
-      const doneBugs = doneTasks.filter(t => t.type === 'Bug').length;
-      const quality = doneTasks.length > 0 ? (1 - (doneBugs / doneTasks.length)) : 1;
-      const cycleTime = 1.0;
+      const empKpis = kpis.filter(k => k.employeeId === emp.id);
+      const metrics = calculateMetrics(empTasks, empKpis);
 
       return {
         type: 'Employee',
         id: emp.id,
         name: emp.name,
-        velocity: Math.round(velocity),
-        completionRate: Math.round(completionRate * 100),
-        quality: Math.round(quality * 100),
-        cycleTime,
-        overallScore: Math.round((completionRate * 0.5 + quality * 0.5) * 100)
+        ...metrics,
+        overallScore: Math.round((metrics.completionRate.actual * 0.5 + metrics.quality.actual * 0.5))
       };
     });
 
     // Merge and return
-    const results = [...projectResults, ...employeeResults].filter(r => r.velocity > 0 || r.completionRate > 0);
+    const results = [...projectResults, ...employeeResults].filter(r => r.velocity.actual > 0 || r.completionRate.actual > 0);
 
-    console.log(`[T3] Đã tính toán KPI cho ${projects.length} dự án và ${employees.length} nhân sự`);
+    console.log(`[T3] Đã tính toán KPI chi tiết cho ${projects.length} dự án và ${employees.length} nhân sự`);
     res.json({ results });
   } catch (error) {
     console.error('[T3] Lỗi tính toán:', error.message);
