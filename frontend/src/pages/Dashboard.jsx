@@ -6,10 +6,8 @@ import {
 import StatCard from '../components/StatCard'
 import ServiceCard from '../components/ServiceCard'
 import { MOCK_DASHBOARD } from '../mock/mockData'
-
 const T1 = 'http://localhost:3001'
 const T3 = 'http://localhost:3003'
-
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
@@ -34,11 +32,10 @@ export default function Dashboard() {
   const [kpiStatusData, setKpiStatusData] = useState(MOCK_DASHBOARD.kpiStatusData)
 
   const fetchStats = () => {
-    fetch(`${T1}/api/stats`)
+     fetch(`${T1}/api/stats`)
       .then(r => r.json())
       .then(data => setStats(data))
       .catch(() => { /* Keep mock if fail */ })
-      
     fetch(`${T3}/api/evaluate/stats`)
       .then(r => r.json())
       .then(data => setEvalStats(data))
@@ -65,21 +62,18 @@ export default function Dashboard() {
     fetchStats()
     setTimeout(() => setRefreshing(false), 800)
   }
-
   const cards = [
     { label: 'Dự án đang chạy', value: stats.totalProjects, sub: 'Được quản lý trên hệ thống', iconBg: 'bg-amber-500/10', iconColor: 'text-amber-500', icon: '/favicon.svg' },
     { label: 'Nhân sự', value: stats.totalEmployees, sub: 'Tham gia dự án', iconBg: 'bg-rose-500/10', iconColor: 'text-rose-600', icon: '/favicon.svg' },
     { label: 'Công việc (Tasks)', value: stats.totalTasks, sub: `${evalStats.doneTasks} task đã Done`, iconBg: 'bg-stone-500/10', iconColor: 'text-stone-600', icon: '/favicon.svg' },
     { label: 'Tiến độ chung', value: `${evalStats.avgCompletion}%`, sub: `Tình trạng: ${evalStats.systemHealth}`, iconBg: 'bg-teal-500/10', iconColor: 'text-teal-600', icon: '/favicon.svg' },
   ]
-  
   const services = [
     { name: 'T1 — KPISetup', port: 3001, tech: 'NODEJS', color: 'border-t-amber-500/50', techColor: 'bg-stone-500/20 text-stone-700' },
     { name: 'T2 — WorkData', port: 3002, tech: 'NODEJS', color: 'border-t-rose-500/50', techColor: 'bg-stone-500/20 text-stone-700' },
     { name: 'T3 — Evaluation', port: 3003, tech: 'NODEJS', color: 'border-t-stone-500/50', techColor: 'bg-stone-500/20 text-stone-700' },
     { name: 'T4 — Adjustment', port: 3004, tech: 'NODEJS', color: 'border-t-teal-500/50', techColor: 'bg-stone-500/20 text-stone-700' },
   ]
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -172,7 +166,7 @@ export default function Dashboard() {
         {/* Area Chart */}
         <div className="card lg:col-span-2 flex flex-col">
           <div className="card-header pb-2 border-none">
-            <h2 className="card-title text-base">Xu hướng Hiệu suất Toàn hệ thống</h2>
+            <h2 className="card-title text-base">Xu hướng hiệu suất toàn hệ thống</h2>
             <p className="text-xs text-stone-500 mt-1">Điểm trung bình Overall (7 ngày qua)</p>
           </div>
           <div className="p-4 flex-1 min-h-[250px]">

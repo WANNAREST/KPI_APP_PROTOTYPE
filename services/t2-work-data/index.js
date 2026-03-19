@@ -61,6 +61,7 @@ app.post('/api/workdata/tasks/:taskId/status', async (req, res) => {
       oldStatus: task.status,
       newStatus: status,
       bugCount: Number(bugCount) || 0,
+      actualDuration: Number(req.body.actualDuration) || 0, // In hours or days based on project unit
       actualStartTime: actualStartTime || null,
       actualEndTime: actualEndTime || null,
       note: note || `Đổi trạng thái thành ${status}`,

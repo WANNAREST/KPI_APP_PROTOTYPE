@@ -76,8 +76,6 @@ let nextEmployeeId = 5;
 let nextKpiId = 5;
 let nextTaskId = 7;
 let nextAssetId = 3;
-
-// ─────────────── PROJECTS ───────────────
 // GET — Danh sách dự án
 app.get('/api/projects', (req, res) => {
   res.json(projects);
@@ -115,7 +113,6 @@ app.delete('/api/projects/:id', (req, res) => {
   projects.splice(idx, 1);
   res.json({ message: 'Đã xóa dự án' });
 });
-// ─────────────── EMPLOYEES ───────────────
 // GET — Danh sách nhân viên
 app.get('/api/employees', (req, res) => {
   res.json(employees);
@@ -204,8 +201,6 @@ app.put('/api/kpis/:id', (req, res) => {
   }
   res.json(kpi);
 });
-
-// ─────────────── TASKS ───────────────
 // GET — Danh sách Task
 app.get('/api/tasks', (req, res) => {
   const enriched = tasks.map(t => ({
@@ -215,7 +210,6 @@ app.get('/api/tasks', (req, res) => {
   }));
   res.json(enriched);
 });
-
 // POST — Tạo Task
 app.post('/api/tasks', (req, res) => {
   const { projectId, name, parentId, status, type, estimate, tags, skillsRequired, taskWeight, assigneeId } = req.body;
@@ -262,8 +256,6 @@ app.put('/api/tasks/:id', (req, res) => {
   console.log(`[T1] Đã cập nhật Task #${task.id}`);
   res.json(task);
 });
-
-// ─────────────── ASSETS ───────────────
 // GET — Danh sách Asset
 app.get('/api/assets', (req, res) => {
   const enriched = assets.map(a => ({
@@ -313,9 +305,6 @@ app.put('/api/assets/:id', (req, res) => {
   console.log(`[T1] Đã cập nhật Asset #${asset.id}`);
   res.json(asset);
 });
-
-// ─────────────── ASSIGNMENT LOGIC ───────────────
-
 // GET — Preview Assignment
 app.get('/api/projects/:id/assign/preview', (req, res) => {
   const projectId = Number(req.params.id);
@@ -333,9 +322,7 @@ app.get('/api/projects/:id/assign/preview', (req, res) => {
   if (availableEmployees.length === 0) {
     return res.status(400).json({ error: 'Không có nhân viên trong hệ thống' });
   }
-
   let assignments = [];
-
   if (algo === 'roundrobin') {
     tasksToAssign.forEach((t, index) => {
       const emp = availableEmployees[index % availableEmployees.length];
@@ -345,7 +332,7 @@ app.get('/api/projects/:id/assign/preview', (req, res) => {
         weight: t.weight,
         assigneeId: emp.id,
         assigneeName: emp.name,
-        matchScore: 100 // Default for RR
+        matchScore: 100 
       });
     });
   } else {
@@ -353,7 +340,6 @@ app.get('/api/projects/:id/assign/preview', (req, res) => {
     tasksToAssign.forEach(t => {
       let bestMatch = null;
       let highestScore = -1;
-      
       // Normalize required skills: [{ name, weight }]
       let requiredSkills = [];
       if (Array.isArray(t.skills)) {
@@ -361,7 +347,6 @@ app.get('/api/projects/:id/assign/preview', (req, res) => {
       } else if (t.skill) {
         requiredSkills = [{ name: t.skill, weight: 1 }];
       }
-
       availableEmployees.forEach(emp => {
         let weightedScoreSum = 0;
         let totalWeight = 0;
@@ -378,18 +363,14 @@ app.get('/api/projects/:id/assign/preview', (req, res) => {
               maxSkillLevel = Math.max(maxSkillLevel, emp.skills[empSkillName] || 0);
             }
           });
-          
-          weightedScoreSum += (maxSkillLevel * 20) * rWeight; // 1-5 scale -> 100
+          weightedScoreSum += (maxSkillLevel * 25) * rWeight; // 0-4 scale -> 100
         });
-
         const finalScore = totalWeight > 0 ? weightedScoreSum / totalWeight : 0;
-
         if (finalScore > highestScore) {
           highestScore = Math.round(finalScore);
           bestMatch = emp;
         }
       });
-
       const assignee = bestMatch || availableEmployees[0];
       assignments.push({
         taskName: t.name,
@@ -401,10 +382,8 @@ app.get('/api/projects/:id/assign/preview', (req, res) => {
       });
     });
   }
-
   res.json({ assignments });
 });
-
 // POST — Commit Assignment
 app.post('/api/projects/:id/assign/commit', (req, res) => {
   const projectId = Number(req.params.id);

@@ -19,18 +19,20 @@ app.use(express.json());
 // GET — Tính toán hiệu suất cho Project/Employee dựa trên Tasks
 app.get('/api/evaluate', async (req, res) => {
   try {
-    // 1. Fetch data from T1
-    const [tasksRes, projsRes, empsRes, kpisRes] = await Promise.all([
+    // 1. Fetch data from T1 & T2
+    const [tasksRes, projsRes, empsRes, kpisRes, logsRes] = await Promise.all([
       axios.get(`${T1_URL}/api/tasks`),
       axios.get(`${T1_URL}/api/projects`),
       axios.get(`${T1_URL}/api/employees`),
-      axios.get(`${T1_URL}/api/kpis`)
+      axios.get(`${T1_URL}/api/kpis`),
+      axios.get(`${T2_URL}/api/worklogs`)
     ]);
-
+    
     const tasks = tasksRes.data;
     const projects = projsRes.data;
     const employees = empsRes.data;
     const kpis = kpisRes.data;
+    const workLogs = logsRes.data;
 
     if (tasks.length === 0) {
       return res.json({ message: 'Chưa có công việc nào để đánh giá', results: [] });
@@ -41,40 +43,47 @@ app.get('/api/evaluate', async (req, res) => {
       const totalTasks = targetTasks.length;
       const doneTasks = targetTasks.filter(t => t.status === 'Done');
       
+      // Get detailed logs for these tasks from T2
+      const taskIds = targetTasks.map(t => t.id);
+      const relevantLogs = workLogs.filter(log => taskIds.includes(log.taskId));
+
       // 1. Velocity: Sum taskWeight of Done tasks
       const velocityActual = doneTasks.reduce((sum, t) => sum + (Number(t.taskWeight) || 0), 0);
       
-      // 2. Quality: (Done - Bugs) / Done
-      const totalBugs = targetTasks.reduce((sum, t) => sum + (Number(t.bugCount) || 0), 0);
-      const qualityActual = doneTasks.length > 0 ? Math.max(0, (doneTasks.length - totalBugs) / doneTasks.length) * 100 : 100;
+      // 2. Quality: 1 - (Total Bug / Total Task Done)
+      // Quality % = (1 - Sum(Bugs) / DoneCount) * 100
+      const totalBugs = relevantLogs.reduce((sum, l) => sum + (Number(l.bugCount) || 0), 0);
+      const qualityRatio = doneTasks.length > 0 ? (1 - (totalBugs / doneTasks.length)) : 1;
+      const qualityActual = Math.max(0, qualityRatio * 100);
 
-      // 3. Cycle Time: Average of (End - Start)
-      let totalCycleTime = 0;
-      let tasksWithTime = 0;
+      // 3. Cycle Time: Avg(Actual Duration / Estimate)
+      // We want to show a ratio or an index. Let's use it as a percentage index where 100% means Actual = Estimate.
+      // But the requirement says "Average of (Actual / Estimate)".
+      let totalCycleRatio = 0;
+      let tasksWithDuration = 0;
       doneTasks.forEach(t => {
-        if (t.actualStartTime && t.actualEndTime) {
-          const start = new Date(t.actualStartTime);
-          const end = new Date(t.actualEndTime);
-          const diffDays = (end - start) / (1000 * 60 * 60 * 24);
-          if (diffDays > 0) {
-            totalCycleTime += diffDays;
-            tasksWithTime++;
-          }
+        const log = relevantLogs.find(l => l.taskId === t.id && l.newStatus === 'Done');
+        if (log && log.actualDuration && t.estimate) {
+          totalCycleRatio += (Number(log.actualDuration) / Number(t.estimate));
+          tasksWithDuration++;
         }
       });
-      const cycleTimeActual = tasksWithTime > 0 ? (totalCycleTime / tasksWithTime) : 3; // Default 3 if no data
+      const cycleTimeRatio = tasksWithDuration > 0 ? (totalCycleRatio / tasksWithDuration) : 1;
 
       // 4. Completion Rate: Done / Total
       const completionRateActual = totalTasks > 0 ? (doneTasks.length / totalTasks) * 100 : 0;
 
-      // Map to targets
-      const findTarget = (name) => targetKpis.find(k => k.name === name)?.target || 1;
+      // Map to targets with sensible defaults
+      const velocityTarget = targetKpis.find(k => k.name === 'Velocity')?.target || targetTasks.reduce((s, t) => s + (Number(t.taskWeight) || 0), 0) || 10;
+      const qualityTarget = targetKpis.find(k => k.name === 'Quality')?.target || 100; // Target is 0 bugs usually
+      const cycleTimeTarget = targetKpis.find(k => k.name === 'Cycle Time')?.target || 1.0; // Target ratio is 1.0
+      const completionRateTarget = targetKpis.find(k => k.name === 'Completion Rate')?.target || 100;
 
       return {
-        velocity: { actual: velocityActual, target: findTarget('Velocity') },
-        quality: { actual: Math.round(qualityActual), target: findTarget('Quality') },
-        cycleTime: { actual: Number(cycleTimeActual.toFixed(1)), target: findTarget('Cycle Time') },
-        completionRate: { actual: Math.round(completionRateActual), target: findTarget('Completion Rate') }
+        velocity: { actual: velocityActual, target: velocityTarget },
+        quality: { actual: Math.round(qualityActual), target: qualityTarget },
+        cycleTime: { actual: Number(cycleTimeRatio.toFixed(2)), target: cycleTimeTarget },
+        completionRate: { actual: Math.round(completionRateActual), target: completionRateTarget }
       };
     };
 
@@ -84,12 +93,19 @@ app.get('/api/evaluate', async (req, res) => {
       const projKpis = kpis.filter(k => k.projectId === proj.id);
       const metrics = calculateMetrics(projTasks, projKpis);
 
+      const velocityScore = (metrics.velocity.actual / metrics.velocity.target) * 100;
+      const qualityScore = metrics.quality.actual;
+      const cycleScore = (metrics.cycleTime.target / metrics.cycleTime.actual) * 100; // Lower ratio is better
+      const completionScore = metrics.completionRate.actual;
+
+      const overall = (velocityScore * 0.25 + qualityScore * 0.25 + completionScore * 0.25 + Math.min(cycleScore, 150) * 0.25);
+
       return {
         type: 'Project',
         id: proj.id,
         name: proj.name,
-        ...metrics,
-        overallScore: Math.round((metrics.completionRate.actual * 0.4 + metrics.quality.actual * 0.4 + 20) ) // Simplified score
+        metrics,
+        overallScore: Math.round(overall)
       };
     });
 
@@ -99,12 +115,19 @@ app.get('/api/evaluate', async (req, res) => {
       const empKpis = kpis.filter(k => k.employeeId === emp.id);
       const metrics = calculateMetrics(empTasks, empKpis);
 
+      const velocityScore = (metrics.velocity.actual / metrics.velocity.target) * 100;
+      const qualityScore = metrics.quality.actual;
+      const cycleScore = (metrics.cycleTime.target / metrics.cycleTime.actual) * 100;
+      const completionScore = metrics.completionRate.actual;
+
+      const overall = (velocityScore * 0.25 + qualityScore * 0.25 + completionScore * 0.25 + Math.min(cycleScore, 150) * 0.25);
+
       return {
         type: 'Employee',
         id: emp.id,
         name: emp.name,
-        ...metrics,
-        overallScore: Math.round((metrics.completionRate.actual * 0.5 + metrics.quality.actual * 0.5))
+        metrics,
+        overallScore: Math.round(overall)
       };
     });
 

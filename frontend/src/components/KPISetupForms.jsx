@@ -209,10 +209,83 @@ export const EmployeeForm = ({ addEmployee, empForm, setEmpForm, onCancel }) => 
       <input type="number" placeholder="10" value={empForm.costPerHour} onChange={e => setEmpForm({ ...empForm, costPerHour: e.target.value })}
         className="form-input" />
     </div>
-    <div className="col-span-2">
-      <label className="form-label">Kỹ năng (Cú pháp: Skill:Level)</label>
-      <input placeholder="Ví dụ: React:3, NodeJS:4" value={empForm.skills} onChange={e => setEmpForm({ ...empForm, skills: e.target.value })}
-        className="form-input" />
+    <div className="col-span-2 lg:col-span-4">
+      <label className="form-label">Kỹ năng chuyên môn</label>
+      <div className="space-y-3">
+        {/* Add Skill Row */}
+        <div className="flex gap-3">
+           <input 
+            id="emp-skill-name"
+            placeholder="Nhập kĩ năng (VD: React)" 
+            className="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:border-rose-400 outline-none transition-all placeholder:text-stone-400"
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const skillName = e.target.value.trim();
+                const skillLevel = document.getElementById("emp-skill-level").value;
+                if (skillName) {
+                  if (!empForm.skills.find(s => s.name === skillName)) {
+                    setEmpForm({ ...empForm, skills: [...empForm.skills, { name: skillName, level: Number(skillLevel) }] });
+                    e.target.value = '';
+                    document.getElementById("emp-skill-level").value = 2;
+                  }
+                }
+              }
+            }}
+          />
+          <div className="w-32 relative">
+            <select 
+              id="emp-skill-level"
+              defaultValue={2}
+              className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 text-sm appearance-none focus:bg-white focus:border-rose-400 outline-none text-stone-700 font-bold text-center"
+            >
+              {[0,1,2,3,4].map(v => <option key={v} value={v} className="bg-white text-stone-900 border-none">Level {v}</option>)}
+            </select>
+          </div>
+          <button 
+            type="button"
+            onClick={() => {
+              const nameInp = document.getElementById("emp-skill-name");
+              const levelInp = document.getElementById("emp-skill-level");
+              const skillName = nameInp.value.trim();
+              const skillLevel = levelInp.value;
+              if (skillName) {
+                if (!empForm.skills.find(s => s.name === skillName)) {
+                  setEmpForm({ ...empForm, skills: [...empForm.skills, { name: skillName, level: Number(skillLevel) }] });
+                  nameInp.value = '';
+                  levelInp.value = 2;
+                }
+              }
+            }}
+            className="px-6 bg-rose-500 text-white rounded-xl text-sm font-bold hover:bg-rose-600 transition-all active:scale-95 shadow-lg shadow-rose-200"
+          >
+            Thêm
+          </button>
+        </div>
+
+        {/* Skill Tags Display */}
+        <div className="flex flex-wrap gap-2 pt-1 min-h-[40px]">
+          {empForm.skills.length === 0 && <span className="text-xs text-stone-400 italic py-2">Chưa có kĩ năng nào được liệt kê...</span>}
+          {empForm.skills.map((s, idx) => (
+            <div key={idx} className="bg-rose-50 text-rose-600 border border-rose-100 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm animate-in fade-in zoom-in duration-200">
+              <span>{s.name}</span>
+              <span className="bg-rose-500 text-white px-1.5 py-0.5 rounded-lg text-[10px] leading-tight flex items-center gap-1">
+                Lvl {s.level}
+              </span>
+              <button 
+                type="button" 
+                onClick={() => {
+                  const newList = empForm.skills.filter((_, i) => i !== idx);
+                  setEmpForm({ ...empForm, skills: newList });
+                }}
+                className="ml-1 text-rose-300 hover:text-rose-800 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
     <div className="flex justify-end gap-3 pt-4 border-t border-stone-200 col-span-2 lg:col-span-4 mt-2">
       <button type="button" onClick={onCancel} className="px-5 py-2.5 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50 transition cursor-pointer">Hủy</button>

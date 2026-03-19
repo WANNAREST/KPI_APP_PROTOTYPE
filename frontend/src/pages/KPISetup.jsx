@@ -5,9 +5,7 @@ import { ProjectTable, EmployeeTable, TaskTable, AssetTable, KpiTable } from '..
 import Modal from '../components/Modal'
 
 import { MOCK_PROJECTS, MOCK_EMPLOYEES, MOCK_KPIS, MOCK_TASKS, MOCK_ASSETS } from '../mock/mockData'
-
 const T1 = 'http://localhost:3001'
-
 export default function KPISetup() {
   const [tab, setTab] = useState('projects')
   const [projects, setProjects] = useState(MOCK_PROJECTS)
@@ -16,8 +14,8 @@ export default function KPISetup() {
   const [tasks, setTasks] = useState(MOCK_TASKS)
   const [assets, setAssets] = useState(MOCK_ASSETS)
   // ── Form states ──
-  const [projForm, setProjForm] = useState({ name: '', startDate: '', endDate: '', status: 'Planning', sprints: 1, requirementsTxt: '' })
-  const [empForm, setEmpForm] = useState({ name: '', position: '', department: '', costPerHour: 10, skills: '' })
+  const [projForm, setProjForm] = useState({ name: '', startDate: '', endDate: '', status: 'Planning', sprints: 1, requirementsList: [{ name: '', skills: [], weight: 1 }] })
+  const [empForm, setEmpForm] = useState({ name: '', position: '', department: '', costPerHour: 10, skills: [] })
   const [kpiForm, setKpiForm] = useState({ name: '', target: '', unit: '', projectId: '', employeeId: '' })
   const [taskForm, setTaskForm] = useState({ name: '', projectId: '', assigneeId: '', type: 'Task', estimate: 1, taskWeight: 1, tags: '' })
   const [assetForm, setAssetForm] = useState({ name: '', code: '', type: 'Laptop', projectId: '', status: 'available' })
@@ -54,14 +52,10 @@ export default function KPISetup() {
   }
   const addEmployee = async (e) => {
     e.preventDefault()
-    // Convert skills string "React:3, NodeJS:4" to object { React: 3, NodeJS: 4 }
-    let skillsObj = {};
-    if (empForm.skills) {
-      empForm.skills.split(',').forEach(s => {
-        const [k, v] = s.split(':');
-        if (k && v) skillsObj[k.trim()] = Number(v.trim());
-      });
-    }
+    let skillsObj = {}
+    empForm.skills.forEach(s => {
+      if (s.name && s.level) skillsObj[s.name] = Number(s.level)
+    })
 
     try {
       const res = await fetch(`${T1}/api/employees`, {
@@ -69,7 +63,7 @@ export default function KPISetup() {
         body: JSON.stringify({ ...empForm, skills: skillsObj })
       });
       if (!res.ok) throw new Error((await res.json()).error || 'Lỗi hệ thống');
-      setEmpForm({ name: '', position: '', department: '', costPerHour: 10, skills: '' })
+      setEmpForm({ name: '', position: '', department: '', costPerHour: 10, skills: [] })
       setShowForm(false); fetchAll(); toast.success('Đã tạo nhân viên')
     } catch (err) { toast.error(err.message) }
   }
@@ -288,7 +282,7 @@ export default function KPISetup() {
             <button onClick={() => setAssignModal({ ...assignModal, isOpen: false })} className="px-6 py-2 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-100">
               Hủy
             </button>
-            <button onClick={commitAssignment} className="px-6 py-2 bg-stone-900 text-white rounded-lg text-sm font-medium hover:bg-stone-800 shadow-xl">
+            <button onClick={commitAssignment} className="px-6 py-2 bg-rose-500 text-white rounded-lg text-sm font-bold hover:bg-rose-600 transition-all active:scale-95 shadow-xl shadow-rose-200">
               Phê duyệt & Tạo KPI
             </button>
           </div>

@@ -8,7 +8,6 @@ import KPISetup from './pages/KPISetup'
 import WorkData from './pages/WorkData'
 import Evaluation from './pages/Evaluation'
 import Adjustment from './pages/Adjustment'
-
 const pageTitles = {
   '/': 'Tổng Quan Hệ Thống',
   '/setup': 'KPI Setup Service (T1)',
@@ -16,16 +15,13 @@ const pageTitles = {
   '/evaluation': 'Evaluation Service (T3)',
   '/adjustment': 'Adjustment Service (T4)',
 }
-
 function App() {
   const location = useLocation()
   const title = pageTitles[location.pathname] || 'KPI Dashboard'
   const [sidebarOpen, setSidebarOpen] = useState(false)
-
   return (
     <div className="flex min-h-screen">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
       <div className="flex-1 lg:ml-72 flex flex-col w-full transition-all duration-300 min-w-0">
         {/* Top Header - Floating Pill */}
         <header className="m-4 lg:mx-6 lg:mt-6 h-14 rounded-2xl bg-white/80 border border-stone-200 backdrop-blur-md flex items-center justify-between px-4 lg:px-6 sticky top-4 lg:top-6 z-30 shadow-sm">
@@ -52,7 +48,6 @@ function App() {
             <button className="text-stone-600 hover:text-stone-800 text-sm cursor-pointer transition-colors" title="Trợ giúp">❓</button>
           </div>
         </header>
-
         {/* Page Content */}
         <main className="flex-1 p-8">
           <Routes>
@@ -68,7 +63,6 @@ function App() {
     </div>
   )
 }
-
 export default App
 
 
