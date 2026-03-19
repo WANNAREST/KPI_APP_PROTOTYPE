@@ -9,7 +9,7 @@ const navItems = [
 export default function Sidebar({ isOpen, onClose }) {
   return (
     <>
-      {/* Overlay for mobile */}
+    {/* Overlay for mobile */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
@@ -47,14 +47,13 @@ export default function Sidebar({ isOpen, onClose }) {
             </NavLink>
           ))}
         </nav>
-
         {/* User profile */}
         <div className="px-4 py-5 border-t border-stone-200 bg-stone-50">
           <div className="flex items-center gap-4 px-2 py-2">
             <div className="w-10 h-10 rounded-full bg-stone-200 flex items-center justify-center text-sm md:text-base text-stone-800 font-bold shrink-0 shadow-sm">A</div>
             <div className="flex-1 min-w-0">
               <p className="text-sm md:text-base font-bold text-stone-900 truncate">Administrator</p>
-              <p className="text-xs md:text-sm text-stone-600 truncate mt-0.5">admin@system.local</p>
+              <p className="text-xs md:text-sm text-stone-600 truncate mt-0.5">admin@sys.com</p>
             </div>
             <button className="text-stone-500 hover:text-rose-600 transition-colors text-lg md:text-xl cursor-pointer" title="Đăng xuất">⎋</button>
           </div>

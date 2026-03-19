@@ -7,39 +7,74 @@ app.use(express.json());
 let projects = [
   {
     id: 1,
-    name: "Hệ thống Quản lý KPI Nội bộ",
-    startDate: "2026-03-01",
-    endDate: "2026-06-01",
-    status: "Planning",
-    sprints: 4,
+    name: "Performance System 2026",
+    startDate: "2026-01-01",
+    endDate: "2026-12-31",
+    status: "In Progress",
+    sprints: 12,
     requirements: {
       taskList: [
-        { name: "Thiết kế Schema DB", skill: "SQL", weight: 5 },
-        { name: "Viết API Core", skill: "NodeJS", weight: 8 },
+        { name: "Thiết kế API Core", skill: "NodeJS", weight: 8 },
         { name: "Giao diện Dashboard", skill: "React", weight: 7 },
-        { name: "Viết Unit Test", skill: "Jest", weight: 4 }
+        { name: "Viết Unit Test", skill: "Jest", weight: 4 },
+        { name: "Tích hợp CI/CD", skill: "DevOps", weight: 5 }
       ]
     },
     createdAt: new Date().toISOString()
+  },
+  {
+    id: 2,
+    name: "E-Commerce Platform",
+    startDate: "2026-02-15",
+    endDate: "2026-08-30",
+    status: "In Progress",
+    sprints: 8,
+    requirements: { taskList: [] },
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 3,
+    name: "Mobile App Redeploy",
+    startDate: "2026-03-01",
+    endDate: "2026-05-30",
+    status: "Planning",
+    sprints: 4,
+    requirements: { taskList: [] },
+    createdAt: new Date().toISOString()
   }
 ];
+
 let employees = [
-  { id: 1, name: "Nguyễn Văn A", position: "Backend Lead", department: "Kỹ thuật", costPerHour: 50, skills: { "NodeJS": 5, "SQL": 4, "Docker": 3 } },
-  { id: 2, name: "Trần Thị B", position: "Frontend Dev", department: "Kỹ thuật", costPerHour: 40, skills: { "React": 5, "CSS": 5, "Figma": 4 } },
-  { id: 3, name: "Lê Văn C", position: "Fullstack Dev", department: "Kỹ thuật", costPerHour: 45, skills: { "NodeJS": 4, "React": 4, "SQL": 5 } },
-  { id: 4, name: "Phạm Thị D", position: "Tester", department: "QC", costPerHour: 30, skills: { "Jest": 5, "Manual Test": 5, "Automation": 4 } }
+  { id: 1, name: "Trần Thế Anh", position: "Backend Lead", department: "Kỹ thuật", costPerHour: 50, skills: { "NodeJS": 5, "SQL": 4, "Docker": 3 } },
+  { id: 2, name: "Lê Thị Bích", position: "Frontend Dev", department: "Kỹ thuật", costPerHour: 40, skills: { "React": 5, "CSS": 5, "Figma": 4 } },
+  { id: 3, name: "Nguyễn Văn Cường", position: "Fullstack Dev", department: "Kỹ thuật", costPerHour: 45, skills: { "NodeJS": 4, "React": 4, "SQL": 5 } },
+  { id: 4, name: "Phạm Minh Dũng", position: "Tester", department: "QC", costPerHour: 30, skills: { "Jest": 5, "Manual Test": 5, "Automation": 4 } }
 ];
-let kpis = [];
-let tasks = [];
+
+let kpis = [
+  { id: 1, name: "Velocity", target: 20, unit: "pts/sprint", projectId: 1, createdAt: new Date().toISOString() },
+  { id: 2, name: "Quality", target: 95, unit: "%", projectId: 1, createdAt: new Date().toISOString() },
+  { id: 3, name: "Cycle Time", target: 3, unit: "days", projectId: 1, createdAt: new Date().toISOString() },
+  { id: 4, name: "Completion Rate", target: 100, unit: "%", projectId: 1, createdAt: new Date().toISOString() }
+];
+
+let tasks = [
+  { id: 1, projectId: 1, assigneeId: 1, name: "Thiết kế API Core", status: "Done", type: "Task", estimate: 8, taskWeight: 8, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: 2, projectId: 1, assigneeId: 2, name: "Giao diện Dashboard", status: "Inprogress", type: "Task", estimate: 7, taskWeight: 7, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: 3, projectId: 1, assigneeId: 4, name: "Viết Unit Test", status: "Todo", type: "Task", estimate: 4, taskWeight: 4, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: 4, projectId: 1, assigneeId: 3, name: "Tích hợp CI/CD", status: "Todo", type: "Task", estimate: 5, taskWeight: 5, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: 5, projectId: 2, assigneeId: 1, name: "Database Optimization", status: "Done", type: "Task", estimate: 6, taskWeight: 6, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: 6, projectId: 2, assigneeId: 3, name: "Payment Gateway", status: "Inprogress", type: "Task", estimate: 10, taskWeight: 10, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+];
 let assets = [
   { id: 1, code: "LAP_001", name: "MacBook Pro M2", type: "Laptop", projectId: 1, status: "using", createdAt: new Date().toISOString() },
   { id: 2, code: "LAP_002", name: "Dell XPS 15", type: "Laptop", projectId: null, status: "available", createdAt: new Date().toISOString() }
 ];
 
-let nextProjectId = 2;
+let nextProjectId = 4;
 let nextEmployeeId = 5;
-let nextKpiId = 1;
-let nextTaskId = 1;
+let nextKpiId = 5;
+let nextTaskId = 7;
 let nextAssetId = 3;
 
 // ─────────────── PROJECTS ───────────────
@@ -318,35 +353,51 @@ app.get('/api/projects/:id/assign/preview', (req, res) => {
     tasksToAssign.forEach(t => {
       let bestMatch = null;
       let highestScore = -1;
+      
+      // Normalize required skills: [{ name, weight }]
+      let requiredSkills = [];
+      if (Array.isArray(t.skills)) {
+        requiredSkills = t.skills.map(s => typeof s === 'string' ? { name: s, weight: 1 } : s);
+      } else if (t.skill) {
+        requiredSkills = [{ name: t.skill, weight: 1 }];
+      }
 
       availableEmployees.forEach(emp => {
-        let score = 0;
-        // Check exact or partial match
-        const taskSkill = (t.skill || '').toLowerCase();
-        
-        // emp.skills is { "SkillName": level }
-        Object.keys(emp.skills || {}).forEach(empSkillName => {
-          const sName = empSkillName.toLowerCase();
-          if (sName.includes(taskSkill) || taskSkill.includes(sName)) {
-            score = (emp.skills[empSkillName] || 0) * 20; // 1-5 scale to 100
-          }
+        let weightedScoreSum = 0;
+        let totalWeight = 0;
+
+        requiredSkills.forEach(reqSkill => {
+          const rName = (reqSkill.name || '').toLowerCase();
+          const rWeight = Number(reqSkill.weight) || 1;
+          totalWeight += rWeight;
+
+          let maxSkillLevel = 0;
+          Object.keys(emp.skills || {}).forEach(empSkillName => {
+            const sName = empSkillName.toLowerCase();
+            if (sName.includes(rName) || rName.includes(sName)) {
+              maxSkillLevel = Math.max(maxSkillLevel, emp.skills[empSkillName] || 0);
+            }
+          });
+          
+          weightedScoreSum += (maxSkillLevel * 20) * rWeight; // 1-5 scale -> 100
         });
 
-        if (score > highestScore) {
-          highestScore = score;
+        const finalScore = totalWeight > 0 ? weightedScoreSum / totalWeight : 0;
+
+        if (finalScore > highestScore) {
+          highestScore = Math.round(finalScore);
           bestMatch = emp;
         }
       });
 
-      // If no match found, fallback to first available or round robin logic
       const assignee = bestMatch || availableEmployees[0];
       assignments.push({
         taskName: t.name,
-        skillRequired: t.skill,
+        skillsRequired: requiredSkills,
         weight: t.weight,
         assigneeId: assignee.id,
         assigneeName: assignee.name,
-        matchScore: highestScore > 0 ? highestScore : 0
+        matchScore: highestScore
       });
     });
   }
@@ -372,7 +423,7 @@ app.post('/api/projects/:id/assign/commit', (req, res) => {
       status: 'Todo',
       type: 'Task',
       estimate: a.weight,
-      skillsRequired: { [a.skillRequired]: 3 },
+      skillsRequired: a.skillsRequired || [],
       taskWeight: Number(a.weight),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -424,6 +475,29 @@ app.get('/api/stats', (req, res) => {
     totalTasks: tasks.length,
     totalAssets: assets.length
   });
+});
+
+// ─────────────── DASHBOARD HELPERS ───────────────
+app.get('/api/dashboard/trend', (req, res) => {
+  res.json([
+    { day: 'Thứ 2', avgScore: 72 },
+    { day: 'Thứ 3', avgScore: 75 },
+    { day: 'Thứ 4', avgScore: 78 },
+    { day: 'Thứ 5', avgScore: 84 },
+    { day: 'Thứ 6', avgScore: 88 },
+    { day: 'Thứ 7', avgScore: 91 },
+    { day: 'Chủ Nhật', avgScore: 94 },
+  ]);
+});
+
+app.get('/api/dashboard/projects', (req, res) => {
+  res.json([
+    { name: 'Performance System', target: 95, actual: 88 },
+    { name: 'E-Commerce Platform', target: 80, actual: 72 },
+    { name: 'Mobile App Redeploy', target: 60, actual: 45 },
+    { name: 'CRM Integration', target: 120, actual: 115 },
+    { name: 'Cloud Migration', target: 100, actual: 98 },
+  ]);
 });
 
 app.listen(PORT, () => {

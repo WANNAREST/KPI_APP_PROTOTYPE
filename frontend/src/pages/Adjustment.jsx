@@ -31,7 +31,6 @@ export default function Adjustment() {
   const handleNoteBlur = (id, value) => {
     updateDetails(id, 'note', value)
   }
-
   // ── Chốt & Chuyển kỳ ──
   const handleCloseCycle = async () => {
     setIsClosing(true)

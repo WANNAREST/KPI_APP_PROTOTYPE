@@ -30,13 +30,156 @@ export const ProjectForm = ({ addProject, projForm, setProjForm, onCancel }) => 
         className="form-input" />
     </div>
     <div className="col-span-2 lg:col-span-3">
-      <label className="form-label">Yêu cầu công việc (Tên Task : Kỹ năng : Trọng số)</label>
-      <textarea 
-        placeholder="Ví dụ:&#10;Thiết kế UI : Figma : 3&#10;Code Backend : NodeJS : 5" 
-        value={projForm.requirementsTxt || ''} 
-        onChange={e => setProjForm({ ...projForm, requirementsTxt: e.target.value })}
-        rows="4"
-        className="form-input" />
+      <div className="flex justify-between items-center mb-3">
+        <div>
+          <label className="form-label mb-0">Yêu cầu công việc (Danh sách Task & Kỹ năng có trọng số)</label>
+          <p className="text-[11px] text-stone-500 mt-0.5 italic">Gợi ý: Nhập tên kĩ năng và trọng số tương ứng (1-10) để tối ưu hóa phân công.</p>
+        </div>
+        <button 
+          type="button" 
+          onClick={() => setProjForm({ ...projForm, requirementsList: [...projForm.requirementsList, { name: '', skills: [], weight: 1 }] })}
+          className="px-4 py-1.5 bg-rose-500 text-white rounded-xl text-[11px] font-bold hover:bg-rose-600 active:scale-95 transition-all shadow-md shadow-rose-200"
+        >
+          + Thêm Task Mới
+        </button>
+      </div>
+      
+      <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 border border-stone-100 rounded-3xl p-4 bg-stone-50/30">
+        {projForm.requirementsList.map((req, idx) => (
+          <div key={idx} className="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm transition-all hover:border-rose-300 hover:shadow-md group relative">
+            <div className="flex gap-5 items-start">
+              <div className="flex-1 space-y-4">
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className="text-[10px] uppercase tracking-wider font-extrabold text-stone-400 mb-1.5 block">Tên Công Việc</label>
+                    <input 
+                      placeholder="VD: Xây dựng Module Mobile Core" 
+                      value={req.name} 
+                      onChange={e => {
+                        const newList = [...projForm.requirementsList];
+                        newList[idx].name = e.target.value;
+                        setProjForm({ ...projForm, requirementsList: newList });
+                      }}
+                      className="w-full bg-stone-50/50 border border-stone-100 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:border-rose-400 outline-none transition-all placeholder:text-stone-300" 
+                    />
+                  </div>
+                  <div className="w-24 text-right">
+                    <label className="text-[10px] uppercase tracking-wider font-extrabold text-stone-400 mb-1.5 block">Ưu tiên (w)</label>
+                    <input 
+                      type="number" 
+                      value={req.weight} 
+                      onChange={e => {
+                        const newList = [...projForm.requirementsList];
+                        newList[idx].weight = Number(e.target.value);
+                        setProjForm({ ...projForm, requirementsList: newList });
+                      }}
+                      className="w-full bg-stone-50/50 border border-stone-100 rounded-xl px-3 py-2.5 text-sm text-center font-bold text-stone-700 focus:bg-white focus:border-rose-400 outline-none transition-all" 
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] uppercase tracking-wider font-extrabold text-stone-400 mb-2 block">Kỹ năng & Mức độ quan trọng (1-10)</label>
+                  <div className="space-y-3">
+                    {/* Add Skill Row */}
+                    <div className="flex gap-2">
+                       <input 
+                        id={`skill-input-${idx}`}
+                        placeholder="Nhập kĩ năng (VD: React)" 
+                        className="flex-1 bg-stone-50/50 border border-stone-100 rounded-xl px-3 py-2 text-xs focus:bg-white focus:border-rose-300 outline-none"
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const skillVal = e.target.value.trim();
+                            const weightVal = document.getElementById(`weight-input-${idx}`).value;
+                            if (skillVal) {
+                              const newList = [...projForm.requirementsList];
+                              if (!newList[idx].skills.find(s => s.name === skillVal)) {
+                                newList[idx].skills = [...newList[idx].skills, { name: skillVal, weight: Number(weightVal) || 1 }];
+                                setProjForm({ ...projForm, requirementsList: newList });
+                                e.target.value = '';
+                                document.getElementById(`weight-input-${idx}`).value = 1;
+                              }
+                            }
+                          }
+                        }}
+                      />
+                      <input 
+                        id={`weight-input-${idx}`}
+                        type="number"
+                        placeholder="W"
+                        defaultValue={1}
+                        className="w-16 bg-stone-50/50 border border-stone-100 rounded-xl px-2 py-2 text-xs text-center focus:bg-white focus:border-rose-300 outline-none"
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const skillInp = document.getElementById(`skill-input-${idx}`);
+                          const weightInp = document.getElementById(`weight-input-${idx}`);
+                          const skillVal = skillInp.value.trim();
+                          const weightVal = weightInp.value;
+                          if (skillVal) {
+                            const newList = [...projForm.requirementsList];
+                            if (!newList[idx].skills.find(s => s.name === skillVal)) {
+                              newList[idx].skills = [...newList[idx].skills, { name: skillVal, weight: Number(weightVal) || 1 }];
+                              setProjForm({ ...projForm, requirementsList: newList });
+                              skillInp.value = '';
+                              weightInp.value = 1;
+                            }
+                          }
+                        }}
+                        className="px-3 bg-stone-100 text-stone-600 rounded-xl text-xs font-bold hover:bg-rose-500 hover:text-white transition-all active:scale-95"
+                      >
+                        Thêm
+                      </button>
+                    </div>
+
+                    {/* Skill Tags Display */}
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {req.skills.length === 0 && <span className="text-[10px] text-stone-300 italic py-1">Chưa có kĩ năng nào được thêm...</span>}
+                      {req.skills.map((s, si) => (
+                        <div key={si} className="bg-rose-50 text-rose-600 border border-rose-100 px-3 py-1.5 rounded-xl text-[11px] font-bold flex items-center gap-2 group/tag transition-all hover:bg-rose-100 shadow-sm">
+                          <span>{s.name}</span>
+                          <span className="bg-rose-500 text-white px-1.5 py-0.5 rounded-lg text-[9px] leading-tight">w:{s.weight}</span>
+                          <button 
+                            type="button" 
+                            onClick={() => {
+                              const newList = [...projForm.requirementsList];
+                              newList[idx].skills = newList[idx].skills.filter((_, i) => i !== si);
+                              setProjForm({ ...projForm, requirementsList: newList });
+                            }}
+                            className="ml-1 text-rose-300 hover:text-rose-800 transition-colors"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {projForm.requirementsList.length > 1 && (
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    const newList = projForm.requirementsList.filter((_, i) => i !== idx);
+                    setProjForm({ ...projForm, requirementsList: newList });
+                  }}
+                  className="p-2 text-stone-200 hover:text-rose-500 transition-all absolute top-2 right-2 opacity-0 group-hover:opacity-100"
+                  title="Xóa công việc"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
     <div className="flex justify-end gap-3 pt-4 border-t border-stone-200 col-span-2 lg:col-span-3 mt-2">
       <button type="button" onClick={onCancel} className="px-5 py-2.5 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50 transition cursor-pointer">Hủy</button>

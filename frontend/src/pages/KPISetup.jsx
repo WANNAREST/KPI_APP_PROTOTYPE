@@ -14,7 +14,7 @@ export default function KPISetup() {
   const [tasks, setTasks] = useState([])
   const [assets, setAssets] = useState([])
   // ── Form states ──
-  const [projForm, setProjForm] = useState({ name: '', startDate: '', endDate: '', status: 'Planning', sprints: 1, requirementsTxt: '' })
+  const [projForm, setProjForm] = useState({ name: '', startDate: '', endDate: '', status: 'Planning', sprints: 1, requirementsList: [{ name: '', skills: [], weight: 1 }] })
   const [empForm, setEmpForm] = useState({ name: '', position: '', department: '', costPerHour: 10, skills: '' })
   const [kpiForm, setKpiForm] = useState({ name: '', target: '', unit: '', projectId: '', employeeId: '' })
   const [taskForm, setTaskForm] = useState({ name: '', projectId: '', assigneeId: '', type: 'Task', estimate: 1, taskWeight: 1, tags: '' })
@@ -36,20 +36,7 @@ export default function KPISetup() {
   // ── CRUD Handlers ──
   const addProject = async (e) => {
     e.preventDefault()
-    // Parse requirementsTxt into taskList
-    let taskList = [];
-    if (projForm.requirementsTxt) {
-      projForm.requirementsTxt.split('\n').forEach(line => {
-        const parts = line.split(':');
-        if (parts.length >= 2) {
-          taskList.push({
-            name: parts[0].trim(),
-            skill: parts[1].trim(),
-            weight: Number(parts[2]) || 1
-          });
-        }
-      });
-    }
+    const taskList = projForm.requirementsList.filter(r => r.name.trim() !== '');
 
     try {
       const res = await fetch(`${T1}/api/projects`, {
@@ -57,7 +44,7 @@ export default function KPISetup() {
         body: JSON.stringify({ ...projForm, requirements: { taskList } })
       });
       if (!res.ok) throw new Error((await res.json()).error || 'Lỗi hệ thống');
-      setProjForm({ name: '', startDate: '', endDate: '', status: 'Planning', sprints: 1, requirementsTxt: '' })
+      setProjForm({ name: '', startDate: '', endDate: '', status: 'Planning', sprints: 1, requirementsList: [{ name: '', skills: [], weight: 1 }] })
       setShowForm(false); fetchAll(); toast.success('Đã tạo dự án')
     } catch (err) { toast.error(err.message) }
   }
@@ -281,7 +268,10 @@ export default function KPISetup() {
                 ) : previewData.map((a, i) => (
                   <tr key={i} className="hover:bg-stone-50 transition-colors">
                     <td className="px-4 py-3 text-sm font-medium text-stone-900">{a.taskName}</td>
-                    <td className="px-4 py-3 text-xs text-stone-600">{a.skillRequired} (v{a.weight})</td>
+                    <td className="px-4 py-3 text-xs text-stone-600">
+                      { (a.skillsRequired || []).map(sk => `${sk.name}(w:${sk.weight})`).join(', ') } 
+                      <span className="text-[10px] text-stone-400 block mt-0.5">Task W: {a.weight}</span>
+                    </td>
                     <td className="px-4 py-3 text-sm text-rose-600 font-bold">{a.assigneeName}</td>
                     <td className="px-4 py-3 text-sm text-right font-mono">{a.matchScore}%</td>
                   </tr>

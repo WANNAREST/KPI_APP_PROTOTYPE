@@ -7,21 +7,21 @@ import StatCard from '../components/StatCard'
 import ServiceCard from '../components/ServiceCard'
 const T1 = 'http://localhost:3001'
 const T3 = 'http://localhost:3003'
-const projectData = [
-  { name: 'App KPI', target: 100, actual: 85 },
-  { name: 'CRM System', target: 80, actual: 90 },
-  { name: 'E-commerce', target: 120, actual: 110 },
-  { name: 'HR Portal', target: 60, actual: 65 },
-  { name: 'Marketing', target: 90, actual: 80 },
+const projectDataPlaceholder = [
+  { name: 'Performance System', target: 95, actual: 88 },
+  { name: 'E-Commerce Platform', target: 80, actual: 72 },
+  { name: 'Mobile App Redeploy', target: 60, actual: 45 },
+  { name: 'CRM Integration', target: 120, actual: 115 },
+  { name: 'Cloud Migration', target: 100, actual: 98 },
 ]
-const trendData = [
-  { day: 'T2', avgScore: 65 },
-  { day: 'T3', avgScore: 70 },
-  { day: 'T4', avgScore: 82 },
-  { day: 'T5', avgScore: 78 },
-  { day: 'T6', avgScore: 85 },
-  { day: 'T7', avgScore: 89 },
-  { day: 'CN', avgScore: 92 },
+const trendDataPlaceholder = [
+  { day: 'Thứ 2', avgScore: 72 },
+  { day: 'Thứ 3', avgScore: 75 },
+  { day: 'Thứ 4', avgScore: 78 },
+  { day: 'Thứ 5', avgScore: 84 },
+  { day: 'Thứ 6', avgScore: 88 },
+  { day: 'Thứ 7', avgScore: 91 },
+  { day: 'Chủ Nhật', avgScore: 94 },
 ]
 const kpiStatusData = [
   { name: 'Đạt (Pass)', value: 12, color: '#fba918' }, // amber warm
@@ -47,10 +47,14 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ totalProjects: 0, totalEmployees: 0, totalKpis: 0, totalTasks: 0, totalAssets: 0 })
   const [evalStats, setEvalStats] = useState({ totalEmployees: 0, totalTasks: 0, doneTasks: 0, avgCompletion: 0, systemHealth: 'N/A' })
   const [refreshing, setRefreshing] = useState(false)
+  const [projectData, setProjectData] = useState(projectDataPlaceholder)
+  const [trendData, setTrendData] = useState(trendDataPlaceholder)
 
   const fetchStats = () => {
     fetch(`${T1}/api/stats`).then(r => r.json()).then(setStats).catch(() => {})
     fetch(`${T3}/api/evaluate/stats`).then(r => r.json()).then(setEvalStats).catch(() => {})
+    fetch(`${T1}/api/dashboard/projects`).then(r => r.json()).then(setProjectData).catch(() => {})
+    fetch(`${T1}/api/dashboard/trend`).then(r => r.json()).then(setTrendData).catch(() => {})
   }
   
   useEffect(fetchStats, [])

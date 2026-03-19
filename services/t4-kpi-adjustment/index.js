@@ -1,18 +1,51 @@
 const express = require('express');
 const cors = require('cors');
-
 const app = express();
 const PORT = 3004;
-
 app.use(cors());
 app.use(express.json());
-
 // ============================================
 // KPIAdjustmentService (T4) — Cập nhật trạng thái KPI
 // ============================================
-
-let adjustments = [];
-let nextId = 1;
+let adjustments = [
+  {
+    id: 1,
+    type: "Project",
+    targetId: 1,
+    name: "Performance System 2026",
+    metrics: {
+      velocity: { actual: 18, target: 20 },
+      quality: { actual: 92, target: 95 },
+      cycleTime: { actual: 3.5, target: 3 },
+      completionRate: { actual: 85, target: 100 }
+    },
+    overallScore: 88,
+    needsAdjustment: true,
+    suggestions: ["Velocity thấp hơn mục tiêu 10%", "Completion Rate cần cải thiện"],
+    adjustedAt: new Date().toISOString(),
+    isClosed: false,
+    note: "Cần tập trung hoàn thành các backlog tồn đọng."
+  },
+  {
+    id: 2,
+    type: "Project",
+    targetId: 2,
+    name: "E-Commerce Platform",
+    metrics: {
+      velocity: { actual: 24, target: 25 },
+      quality: { actual: 98, target: 95 },
+      cycleTime: { actual: 2.8, target: 3 },
+      completionRate: { actual: 92, target: 100 }
+    },
+    overallScore: 94,
+    needsAdjustment: false,
+    suggestions: [],
+    adjustedAt: new Date().toISOString(),
+    isClosed: false,
+    note: "Tiến độ rất tốt, duy trì phong độ."
+  }
+];
+let nextId = 3;
 
 const axios = require('axios');
 const T1_URL = 'http://localhost:3001';
@@ -24,12 +57,10 @@ app.post('/api/adjust', async (req, res) => {
   if (!results || !Array.isArray(results)) {
     return res.status(400).json({ error: 'Vui lòng cung cấp mảng results' });
   }
-
   const newAdjustments = await Promise.all(results.map(async r => {
     // Check deviation > 20% for any metric
     let needsAdjustment = false;
     let suggestions = [];
-
     const check = (actual, target, name) => {
       if (!target || target === 0) return;
       const deviation = Math.abs(actual - target) / target;
@@ -38,7 +69,6 @@ app.post('/api/adjust', async (req, res) => {
         suggestions.push(`${name} lệch ${Math.round(deviation * 100)}% (Thực tế: ${actual}, Mục tiêu: ${target})`);
       }
     };
-
     check(r.velocity.actual, r.velocity.target, 'Velocity');
     check(r.quality.actual, r.quality.target, 'Quality');
     check(r.cycleTime.actual, r.cycleTime.target, 'Cycle Time');
