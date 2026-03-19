@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import Sparkline from '../components/Sparkline'
 import Modal from '../components/Modal'
+import { MOCK_DASHBOARD } from '../mock/mockData'
+
 const T1 = 'http://localhost:3001'
 const T4 = 'http://localhost:3004'
 // ── Recommendation Logic ──
@@ -16,9 +18,14 @@ export default function Adjustment() {
   const [showModal, setShowModal] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const fetchData = () => {
-    fetch(`${T4}/api/adjustments`).then(r => r.json()).then(setAdjustments).catch(() => {})
+    fetch(`${T4}/api/adjustments`)
+      .then(r => r.json())
+      .then(data => data.length && setAdjustments(data))
+      .catch(() => {})
   }
-  useEffect(fetchData, [])
+  useEffect(() => {
+    fetchData()
+  }, [])
   // Cập nhật chi tiết (Notes, NextTarget)
   const updateDetails = async (id, field, value) => {
     await fetch(`${T4}/api/adjust/summary/${id}/details`, {

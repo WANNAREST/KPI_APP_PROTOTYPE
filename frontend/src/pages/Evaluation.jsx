@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
+import { MOCK_WORKLOGS } from '../mock/mockData'
 
 const T3 = 'http://localhost:3003'
 const T4 = 'http://localhost:3004'
@@ -20,7 +21,7 @@ export default function Evaluation() {
         }
       }
     } catch {
-      // Ignore if fetch fails on initial load
+      // Keep results empty or use a specific mock if needed
     }
   }
 

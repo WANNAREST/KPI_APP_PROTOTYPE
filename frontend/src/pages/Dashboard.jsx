@@ -5,29 +5,11 @@ import {
 } from 'recharts'
 import StatCard from '../components/StatCard'
 import ServiceCard from '../components/ServiceCard'
+import { MOCK_DASHBOARD } from '../mock/mockData'
+
 const T1 = 'http://localhost:3001'
 const T3 = 'http://localhost:3003'
-const projectDataPlaceholder = [
-  { name: 'Performance System', target: 95, actual: 88 },
-  { name: 'E-Commerce Platform', target: 80, actual: 72 },
-  { name: 'Mobile App Redeploy', target: 60, actual: 45 },
-  { name: 'CRM Integration', target: 120, actual: 115 },
-  { name: 'Cloud Migration', target: 100, actual: 98 },
-]
-const trendDataPlaceholder = [
-  { day: 'Thứ 2', avgScore: 72 },
-  { day: 'Thứ 3', avgScore: 75 },
-  { day: 'Thứ 4', avgScore: 78 },
-  { day: 'Thứ 5', avgScore: 84 },
-  { day: 'Thứ 6', avgScore: 88 },
-  { day: 'Thứ 7', avgScore: 91 },
-  { day: 'Chủ Nhật', avgScore: 94 },
-]
-const kpiStatusData = [
-  { name: 'Đạt (Pass)', value: 12, color: '#fba918' }, // amber warm
-  { name: 'Không đạt (Fail)', value: 4, color: '#fb7185' }, // rose/coral
-  { name: 'Đang xem xét', value: 3, color: '#a8a29e' }, // stone-400
-]
+
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
@@ -44,20 +26,39 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 export default function Dashboard() {
-  const [stats, setStats] = useState({ totalProjects: 0, totalEmployees: 0, totalKpis: 0, totalTasks: 0, totalAssets: 0 })
-  const [evalStats, setEvalStats] = useState({ totalEmployees: 0, totalTasks: 0, doneTasks: 0, avgCompletion: 0, systemHealth: 'N/A' })
+  const [stats, setStats] = useState(MOCK_DASHBOARD.stats)
+  const [evalStats, setEvalStats] = useState(MOCK_DASHBOARD.evalStats)
   const [refreshing, setRefreshing] = useState(false)
-  const [projectData, setProjectData] = useState(projectDataPlaceholder)
-  const [trendData, setTrendData] = useState(trendDataPlaceholder)
+  const [projectData, setProjectData] = useState(MOCK_DASHBOARD.projectData)
+  const [trendData, setTrendData] = useState(MOCK_DASHBOARD.trendData)
+  const [kpiStatusData, setKpiStatusData] = useState(MOCK_DASHBOARD.kpiStatusData)
 
   const fetchStats = () => {
-    fetch(`${T1}/api/stats`).then(r => r.json()).then(setStats).catch(() => {})
-    fetch(`${T3}/api/evaluate/stats`).then(r => r.json()).then(setEvalStats).catch(() => {})
-    fetch(`${T1}/api/dashboard/projects`).then(r => r.json()).then(setProjectData).catch(() => {})
-    fetch(`${T1}/api/dashboard/trend`).then(r => r.json()).then(setTrendData).catch(() => {})
+    fetch(`${T1}/api/stats`)
+      .then(r => r.json())
+      .then(data => setStats(data))
+      .catch(() => { /* Keep mock if fail */ })
+      
+    fetch(`${T3}/api/evaluate/stats`)
+      .then(r => r.json())
+      .then(data => setEvalStats(data))
+      .catch(() => {})
+      
+    fetch(`${T1}/api/dashboard/projects`)
+      .then(r => r.json())
+      .then(data => setProjectData(data))
+      .catch(() => {})
+      
+    fetch(`${T1}/api/dashboard/trend`)
+      .then(r => r.json())
+      .then(data => setTrendData(data))
+      .catch(() => {})
   }
   
-  useEffect(fetchStats, [])
+  useEffect(() => {
+    // Optionally fetch if backend is alive
+    fetch(`${T1}/api/stats`).then(() => fetchStats()).catch(() => {})
+  }, [])
   
   const handleRefresh = () => {
     setRefreshing(true)

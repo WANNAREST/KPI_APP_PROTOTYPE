@@ -4,17 +4,19 @@ import { ProjectForm, EmployeeForm, TaskForm, AssetForm, KpiForm } from '../comp
 import { ProjectTable, EmployeeTable, TaskTable, AssetTable, KpiTable } from '../components/KPISetupTables'
 import Modal from '../components/Modal'
 
+import { MOCK_PROJECTS, MOCK_EMPLOYEES, MOCK_KPIS, MOCK_TASKS, MOCK_ASSETS } from '../mock/mockData'
+
 const T1 = 'http://localhost:3001'
 
 export default function KPISetup() {
   const [tab, setTab] = useState('projects')
-  const [projects, setProjects] = useState([])
-  const [employees, setEmployees] = useState([])
-  const [kpis, setKpis] = useState([])
-  const [tasks, setTasks] = useState([])
-  const [assets, setAssets] = useState([])
+  const [projects, setProjects] = useState(MOCK_PROJECTS)
+  const [employees, setEmployees] = useState(MOCK_EMPLOYEES)
+  const [kpis, setKpis] = useState(MOCK_KPIS)
+  const [tasks, setTasks] = useState(MOCK_TASKS)
+  const [assets, setAssets] = useState(MOCK_ASSETS)
   // ── Form states ──
-  const [projForm, setProjForm] = useState({ name: '', startDate: '', endDate: '', status: 'Planning', sprints: 1, requirementsList: [{ name: '', skills: [], weight: 1 }] })
+  const [projForm, setProjForm] = useState({ name: '', startDate: '', endDate: '', status: 'Planning', sprints: 1, requirementsTxt: '' })
   const [empForm, setEmpForm] = useState({ name: '', position: '', department: '', costPerHour: 10, skills: '' })
   const [kpiForm, setKpiForm] = useState({ name: '', target: '', unit: '', projectId: '', employeeId: '' })
   const [taskForm, setTaskForm] = useState({ name: '', projectId: '', assigneeId: '', type: 'Task', estimate: 1, taskWeight: 1, tags: '' })
@@ -26,13 +28,15 @@ export default function KPISetup() {
   const [previewData, setPreviewData] = useState([])
   const [loadingPreview, setLoadingPreview] = useState(false)
   const fetchAll = () => {
-    fetch(`${T1}/api/projects`).then(r => r.json()).then(setProjects).catch(() => {})
-    fetch(`${T1}/api/employees`).then(r => r.json()).then(setEmployees).catch(() => {})
-    fetch(`${T1}/api/kpis`).then(r => r.json()).then(setKpis).catch(() => {})
-    fetch(`${T1}/api/tasks`).then(r => r.json()).then(setTasks).catch(() => {})
-    fetch(`${T1}/api/assets`).then(r => r.json()).then(setAssets).catch(() => {})
+    fetch(`${T1}/api/projects`).then(r => r.json()).then(data => data.length && setProjects(data)).catch(() => {})
+    fetch(`${T1}/api/employees`).then(r => r.json()).then(data => data.length && setEmployees(data)).catch(() => {})
+    fetch(`${T1}/api/kpis`).then(r => r.json()).then(data => data.length && setKpis(data)).catch(() => {})
+    fetch(`${T1}/api/tasks`).then(r => r.json()).then(data => data.length && setTasks(data)).catch(() => {})
+    fetch(`${T1}/api/assets`).then(r => r.json()).then(data => data.length && setAssets(data)).catch(() => {})
   }
-  useEffect(fetchAll, [])
+  useEffect(() => {
+    fetchAll()
+  }, [])
   // ── CRUD Handlers ──
   const addProject = async (e) => {
     e.preventDefault()

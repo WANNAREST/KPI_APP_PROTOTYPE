@@ -1,20 +1,23 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
+import { MOCK_TASKS, MOCK_EMPLOYEES, MOCK_WORKLOGS } from '../mock/mockData'
 
 const T1 = 'http://localhost:3001'
 const T2 = 'http://localhost:3002'
 
 export default function WorkData() {
-  const [tasks, setTasks] = useState([])
-  const [employees, setEmployees] = useState([])
-  const [workLogs, setWorkLogs] = useState([])
+  const [tasks, setTasks] = useState(MOCK_TASKS || [])
+  const [employees, setEmployees] = useState(MOCK_EMPLOYEES)
+  const [workLogs, setWorkLogs] = useState(MOCK_WORKLOGS)
 
   const fetchData = () => {
-    fetch(`${T1}/api/tasks`).then(r => r.json()).then(setTasks).catch(() => {})
-    fetch(`${T1}/api/employees`).then(r => r.json()).then(setEmployees).catch(() => {})
-    fetch(`${T2}/api/worklogs`).then(r => r.json()).then(setWorkLogs).catch(() => {})
+    fetch(`${T1}/api/tasks`).then(r => r.json()).then(data => data.length && setTasks(data)).catch(() => {})
+    fetch(`${T1}/api/employees`).then(r => r.json()).then(data => data.length && setEmployees(data)).catch(() => {})
+    fetch(`${T2}/api/worklogs`).then(r => r.json()).then(data => data.length && setWorkLogs(data)).catch(() => {})
   }
-  useEffect(fetchData, [])
+  useEffect(() => {
+    fetchData()
+  }, [])
 
 
 
